@@ -30,6 +30,8 @@ def history_to_dict(state: Any) -> Dict[str, Any]:
             }
             for snap in state.snapshots
         ],
+        "scores": dict(state.scores),
+        "temp_scores": dict(state.temp_scores),
     }
 
 
@@ -46,6 +48,8 @@ def state_to_dict(state: Any) -> Dict[str, Any]:
         },
         "current_player": state.current_player,
         "winner": state.winner,
+        "scores": dict(state.scores),
+        "temp_scores": dict(state.temp_scores),
         "bases": {
             str(player): [list(p) for p in base]
             for player, base in board.player_bases.items()

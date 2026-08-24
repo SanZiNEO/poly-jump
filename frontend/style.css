@@ -252,6 +252,22 @@ input:disabled {
   flex-shrink: 0;
 }
 
+#score-board {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.score-chip {
+  font-size: 12px;
+  padding: 3px 8px;
+  background: #f7f7f7;
+  border: 1px solid #dddddd;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 #scene-container {
   width: 100vw;
   height: 100vh;

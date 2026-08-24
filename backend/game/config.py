@@ -62,6 +62,16 @@ class RenderConfig(BaseModel):
     line_opacity: float = 0.3
 
 
+class ScoringConfig(BaseModel):
+    enabled: bool = False
+    first_finish_reward: int = 10
+    chain_jump_points: int = 1
+    chain_temp: bool = True
+    capture_points: int = 2
+    target_zone_points: int = 1
+    survivor_piece_points: int = 1
+
+
 class PolyJumpConfig(BaseModel):
     game_name: str = "PolyJump"
     geometry: Literal["A", "B", "C", "D", "B_EXT", "C_EXT", "A_EXT"] = "A"
@@ -77,6 +87,7 @@ class PolyJumpConfig(BaseModel):
     goal: GoalConfig = Field(default_factory=GoalConfig)
     initial_layout: InitialLayoutConfig = Field(default_factory=InitialLayoutConfig)
     render: RenderConfig = Field(default_factory=RenderConfig)
+    scoring: ScoringConfig = Field(default_factory=ScoringConfig)
 
     @field_validator("board_size")
     @classmethod

@@ -255,6 +255,22 @@ function updatePlayerRoster(config, currentPlayer) {
   }
 }
 
+function renderScoreBoard(board) {
+  const box = document.getElementById("score-board");
+  if (!box) return;
+  box.innerHTML = "";
+
+  const scores = board.scores || {};
+  const temp = board.temp_scores || {};
+  const count = (board.config && board.config.players) || 2;
+  for (let i = 1; i <= count; i++) {
+    const chip = document.createElement("div");
+    chip.className = "score-chip";
+    chip.textContent = `P${i} ${scores[i] || 0}${temp[i] ? ` (+${temp[i]})` : ""}`;
+    box.appendChild(chip);
+  }
+}
+
 function updateHud(board) {
   const status = document.getElementById("status-text");
   if (board.winner) {
@@ -263,6 +279,7 @@ function updateHud(board) {
     status.textContent = `当前玩家：${board.current_player} · 点击本方棋子查看合法路径`;
   }
   updatePlayerRoster(board.config, board.current_player);
+  renderScoreBoard(board);
 }
 
 function boardWithPieces(pieces) {

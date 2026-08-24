@@ -31,6 +31,8 @@ class StepResult:
     legal_paths: List[list]
     legal_actions: List[dict]
     done: bool
+    scores: dict
+    temp_scores: dict
 
 
 class GameEnv:
@@ -73,6 +75,8 @@ class GameEnv:
             legal_paths=[[list(p) for p in path] for path in paths],
             legal_actions=action_index(paths),
             done=self.state.winner is not None,
+            scores=dict(self.state.scores),
+            temp_scores=dict(self.state.temp_scores),
         )
 
     def state_dict(self) -> dict:

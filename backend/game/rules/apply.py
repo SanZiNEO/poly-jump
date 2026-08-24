@@ -42,6 +42,7 @@ class MoveApplier:
             raise ValueError("路径起点不是当前玩家棋子")
 
         board.remove_piece(start)
+        capture_count = 0
         for i in range(len(path_t) - 1):
             src = path_t[i]
             dst = path_t[i + 1]
@@ -57,9 +58,19 @@ class MoveApplier:
 
             captured_owner = board.get_piece(captured_pos)
             if captured_owner is not None:
+                if (
+                    self.config.capture.mode.value != "NONE"
+                    and (
+                        not self.config.capture.capture_opponent_only
+                        or captured_owner != player
+                    )
+                ):
+                    capture_count += 1
                 self.capture_handler.handle_jump(
                     board, src, dst, player, captured_owner, captured_pos
                 )
+
+        return capture_count
 
     def _captured_pos(self, src: Point, dst: Point) -> Point | None:
         """返回标准跳/两格跳中被跳棋子位置；不是跳跃段返回 None。"""
