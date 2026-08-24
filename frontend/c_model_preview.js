@@ -101,6 +101,12 @@ const sets = {
     color: 0x2255aa,
     size: 0.13,
   },
+  core: {
+    label: "L1 球满度核心 R=3",
+    points: l1FullPoints(3),
+    color: 0x00aa44,
+    size: 0.16,
+  },
   pyramids: {
     label: "立方体 + 外部金字塔",
     points: fullCubePlusPyramids(),
@@ -179,6 +185,7 @@ function rebuild() {
   const candidates = [
     ["cube", "show-cube"],
     ["l1", "show-l1"],
+    ["core", "show-core"],
     ["pyramids", "show-pyramids"],
   ];
 
