@@ -26,6 +26,8 @@ const state = {
   replayMode: false,
   replayTimer: null,
   replayControlsAttached: false,
+  aiPlayers: new Set(),
+  aiMoveTimer: null,
 };
 
 const PLAYER_COLORS = {
@@ -457,6 +459,8 @@ async function submitMove(path) {
   renderBoard(state.board);
   updateHud(state.board);
   await loadHistory(state.gameId);
+  renderAiPlayerControls();
+  maybeAutoMove();
 }
 
 async function handleAiMove() {
@@ -479,6 +483,56 @@ async function handleAiMove() {
   renderBoard(state.board);
   updateHud(state.board);
   await loadHistory(state.gameId);
+  maybeAutoMove();
+}
+
+function renderAiPlayerControls() {
+  const box = document.getElementById("ai-player-controls");
+  if (!box) return;
+  box.innerHTML = "";
+
+  const count = (state.board && state.board.config && state.board.config.players) || 2;
+  for (let i = 1; i <= count; i++) {
+    const label = document.createElement("label");
+    label.className = "switch-row";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = state.aiPlayers.has(i);
+    cb.addEventListener("change", () => {
+      if (cb.checked) state.aiPlayers.add(i);
+      else state.aiPlayers.delete(i);
+      renderAiPlayerControls();
+      maybeAutoMove();
+    });
+    const span = document.createElement("span");
+    span.textContent = `P${i} AI`;
+    label.appendChild(cb);
+    label.appendChild(span);
+    box.appendChild(label);
+  }
+}
+
+function stopAIMove() {
+  if (state.aiMoveTimer) {
+    clearTimeout(state.aiMoveTimer);
+    state.aiMoveTimer = null;
+  }
+}
+
+function maybeAutoMove() {
+  stopAIMove();
+  if (state.winner || state.replayMode) return;
+  if (!state.aiPlayers.has(state.board.current_player)) return;
+  state.aiMoveTimer = setTimeout(async () => {
+    state.aiMoveTimer = null;
+    await handleAiMove();
+  }, 600);
+}
+
+function initAIPlayers() {
+  state.aiPlayers = new Set((window.__polyJump && window.__polyJump.aiPlayers) || []);
+  renderAiPlayerControls();
+  maybeAutoMove();
 }
 
 function findPathTo(dest) {
@@ -555,6 +609,7 @@ window.PolyJumpInit = function (gameId, initialBoard) {
     attachReplayControls();
     state.replayControlsAttached = true;
   }
+  initAIPlayers();
   loadHistory(gameId);
   animate();
 };
@@ -576,7 +631,9 @@ window.PolyJumpDestroy = function () {
   state.replayStep = null;
   state.replayMode = false;
   state.replayControlsAttached = false;
+  state.aiPlayers = new Set();
   stopAutoReplay();
+  stopAIMove();
 };
 
 // 如果主菜单在主脚本就绪前就创建了对局，这里补初始化。

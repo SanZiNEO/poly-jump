@@ -132,6 +132,11 @@
           </select>
         </label>
 
+        <label class="field">
+          <span data-i18n="ai_players_label">AI 玩家（开局设置）</span>
+          <div id="ai-player-menu" class="switch-list"></div>
+        </label>
+
         <button id="start-btn" class="primary-btn" data-i18n="start_game">开始游戏</button>
         <p id="menu-error" class="error"></p>
       </div>
@@ -148,6 +153,7 @@
     </div>
     <div id="history-panel">
       <h3 data-i18n="history_title">对局记录</h3>
+      <div id="ai-player-controls"></div>
       <div id="history-moves"></div>
       <div id="replay-controls">
         <button id="replay-start" title="回到开局" data-i18n="replay_start">⏮</button>

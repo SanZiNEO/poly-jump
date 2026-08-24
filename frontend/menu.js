@@ -25,6 +25,32 @@ function updateLayers() {
   input.value = Number.isNaN(current) ? max : Math.min(Math.max(current, 1), max);
 }
 
+function selectedMenuAIPlayers() {
+  return Array.from(
+    document.querySelectorAll('#ai-player-menu input[data-ai-player]:checked')
+  ).map((el) => parseInt(el.dataset.aiPlayer, 10));
+}
+
+function renderAIPlayerMenu() {
+  const wrap = document.getElementById("ai-player-menu");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const count = parseInt(document.getElementById("players").value, 10);
+
+  for (let i = 1; i <= count; i++) {
+    const label = document.createElement("label");
+    label.className = "switch-row";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.dataset.aiPlayer = String(i);
+    const span = document.createElement("span");
+    span.textContent = `P${i} AI`;
+    label.appendChild(cb);
+    label.appendChild(span);
+    wrap.appendChild(label);
+  }
+}
+
 function updatePlayerOptions(isFixedPlayers) {
   const select = document.getElementById("players");
   const current = parseInt(select.value, 10);
@@ -41,6 +67,7 @@ function updatePlayerOptions(isFixedPlayers) {
     if (v === next) option.selected = true;
     select.appendChild(option);
   });
+  renderAIPlayerMenu();
 }
 
 function updateGeometryFields() {
@@ -236,6 +263,7 @@ async function startGame() {
 
     window.__polyJump.gameId = data.game_id;
     window.__polyJump.state = data.state;
+    window.__polyJump.aiPlayers = selectedMenuAIPlayers();
 
     document.getElementById("menu-page").classList.add("hidden");
     document.getElementById("game-page").classList.remove("hidden");
