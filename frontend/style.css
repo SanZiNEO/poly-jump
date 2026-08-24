@@ -43,7 +43,8 @@ body {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
-  max-width: 1400px;
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
   padding: 22px;
   background: #ffffff;
@@ -52,13 +53,13 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   .menu-card {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 600px) {
   .menu-card {
     grid-template-columns: 1fr;
   }
