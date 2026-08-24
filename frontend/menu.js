@@ -86,7 +86,7 @@ function readConfig() {
       allow_jump: document.getElementById("allow-jump").checked,
       allow_chain: document.getElementById("allow-chain").checked,
       hop_mode: document.getElementById("hop-mode").value,
-      two_step_hop: false,
+      two_step_hop: document.getElementById("allow-two-step").checked,
       max_chain_length: 0,
     },
     capture: {

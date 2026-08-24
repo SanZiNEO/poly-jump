@@ -7,7 +7,12 @@ from typing import List, Sequence, Tuple
 from ..board import Board
 from ..config import PolyJumpConfig
 from ..directions import resolve_direction_set
-from ..moves.segment import is_jump_segment
+from ..moves.segment import (
+    is_jump_segment,
+    is_two_step_segment,
+    jump_mid,
+    two_step_mid,
+)
 from .capture import CaptureHandler
 
 Point = Tuple[int, int, int]
@@ -41,21 +46,25 @@ class MoveApplier:
             src = path_t[i]
             dst = path_t[i + 1]
 
-            # 先把棋子从本段起点移到落点；混合吃子会在 src 空出后回填被跳子。
+            # 先把棋子从本段起点移到落点；混合吃子会稍后回填被跳子。
             if board.get_piece(src) == player:
                 board.remove_piece(src)
             board.set_piece(dst, player)
 
-            if not is_jump_segment(src, dst, self.directions):
+            captured_pos = self._captured_pos(src, dst)
+            if captured_pos is None:
                 continue
 
-            mid = (
-                (src[0] + dst[0]) // 2,
-                (src[1] + dst[1]) // 2,
-                (src[2] + dst[2]) // 2,
-            )
-            captured_owner = board.get_piece(mid)
+            captured_owner = board.get_piece(captured_pos)
             if captured_owner is not None:
                 self.capture_handler.handle_jump(
-                    board, src, dst, player, captured_owner
+                    board, src, dst, player, captured_owner, captured_pos
                 )
+
+    def _captured_pos(self, src: Point, dst: Point) -> Point | None:
+        """返回标准跳/两格跳中被跳棋子位置；不是跳跃段返回 None。"""
+        if is_jump_segment(src, dst, self.directions):
+            return jump_mid(src, dst)
+        if is_two_step_segment(src, dst, self.directions):
+            return two_step_mid(src, dst)
+        return None

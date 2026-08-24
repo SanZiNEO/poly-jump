@@ -9,6 +9,7 @@ from ..config import HopMode, PolyJumpConfig
 from ..directions import resolve_direction_set
 from .jump_generator import JumpGenerator
 from .step_generator import StepGenerator
+from .two_step_hop_generator import TwoStepHopGenerator
 from .types import Path, Point
 
 
@@ -23,6 +24,7 @@ class MoveGenerator:
             self.directions,
             max_chain_length=config.movement.max_chain_length,
         )
+        self.two_step_generator = TwoStepHopGenerator(self.directions)
 
     def legal_moves(self, board: Board, player: int) -> List[Path]:
         paths: List[Path] = []
@@ -47,6 +49,9 @@ class MoveGenerator:
                     for path in jump_paths
                     if not self.jump_generator.has_any_jump(board, path[-1], path)
                 )
+
+        if self.config.movement.two_step_hop:
+            paths.extend(self.two_step_generator.moves_from(board, pos))
 
         return self._deduplicate(paths)
 

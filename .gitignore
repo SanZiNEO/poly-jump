@@ -222,3 +222,9 @@ __marimo__/
 progress.md
 task_plan.md
 findings.md
+
+# Local example projects downloaded for reference
+example/
+
+# Pytest temp cache directories
+pytest-cache-files-*/

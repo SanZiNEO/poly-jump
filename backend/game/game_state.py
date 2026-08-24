@@ -52,4 +52,8 @@ class GameState:
         return True
 
     def _advance_turn(self) -> None:
-        self.current_player = self.current_player % self.config.players + 1
+        # 无棋可走自动跳过：轮询到下一个有合法走法的玩家
+        for _ in range(self.config.players):
+            self.current_player = self.current_player % self.config.players + 1
+            if self.legal_moves():
+                return
