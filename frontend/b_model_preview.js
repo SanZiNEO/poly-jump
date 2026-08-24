@@ -181,12 +181,58 @@ function buildArmsWireframe() {
   return new THREE.LineSegments(geo, mat);
 }
 
+function fullCubePoints(k) {
+  const pts = [];
+  for (let x = -k; x <= k; x++) {
+    for (let y = -k; y <= k; y++) {
+      for (let z = -k; z <= k; z++) {
+        pts.push([x, y, z]);
+      }
+    }
+  }
+  return pts;
+}
+
+// 修正版外接金字塔：轴线上以中心为对称，奇数层 1×1、3×3、5×5
+function externalPyramidPoints() {
+  const pts = fullCubePoints(K); // 中心 5×5×5
+  const otherAxes = (axis) => [0, 1, 2].filter((i) => i !== axis);
+  for (let axis = 0; axis < 3; axis++) {
+    for (const sign of [1, -1]) {
+      const oa = otherAxes(axis);
+      // 第一层：3×3 中心
+      const main1 = sign * (K + 1);
+      for (let a = -1; a <= 1; a++) {
+        for (let b = -1; b <= 1; b++) {
+          const p = [0, 0, 0];
+          p[axis] = main1;
+          p[oa[0]] = a;
+          p[oa[1]] = b;
+          pts.push(p);
+        }
+      }
+      // 第二层：1×1 尖端
+      const main2 = sign * (K + 2);
+      const p = [0, 0, 0];
+      p[axis] = main2;
+      pts.push(p);
+    }
+  }
+  return pts;
+}
+
 const sets = {
   candidate: {
     label: "L1 球 · 偶子晶格",
     points: l1EvenPoints(6),
     color: 0x111111,
     size: 0.13,
+  },
+  extPyramid: {
+    label: "外接金字塔修正（1+9）",
+    points: externalPyramidPoints(),
+    color: 0xaa5522,
+    size: 0.14,
   },
 };
 
@@ -239,6 +285,15 @@ function rebuild() {
     content.add(buildPointCloud(set.points, set.color, set.size));
     if (showLines) {
       content.add(buildEdges(set.points, 0xaaaaaa, 0.12));
+    }
+  }
+
+  if (checked("show-ext-pyramid")) {
+    const set = sets.extPyramid;
+    total += set.points.length;
+    content.add(buildPointCloud(set.points, set.color, set.size));
+    if (showLines) {
+      content.add(buildEdges(set.points, set.color, 0.12));
     }
   }
 

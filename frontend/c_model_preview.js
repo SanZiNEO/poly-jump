@@ -88,6 +88,32 @@ function fullCubePlusPyramids() {
   return fullCubePoints(K).concat(sixFullPyramids());
 }
 
+// 修正版外接金字塔：奇数层 1×1、3×3、5×5，中心在轴线上
+function correctedExternalPyramidPoints() {
+  const pts = fullCubePoints(K);
+  const otherAxes = (axis) => [0, 1, 2].filter((i) => i !== axis);
+  for (let axis = 0; axis < 3; axis++) {
+    for (const sign of [1, -1]) {
+      const oa = otherAxes(axis);
+      const main1 = sign * (K + 1);
+      for (let a = -1; a <= 1; a++) {
+        for (let b = -1; b <= 1; b++) {
+          const p = [0, 0, 0];
+          p[axis] = main1;
+          p[oa[0]] = a;
+          p[oa[1]] = b;
+          pts.push(p);
+        }
+      }
+      const main2 = sign * (K + 2);
+      const p = [0, 0, 0];
+      p[axis] = main2;
+      pts.push(p);
+    }
+  }
+  return pts;
+}
+
 const sets = {
   cube: {
     label: "5×5×5 全整数立方格",
@@ -112,6 +138,12 @@ const sets = {
     points: fullCubePlusPyramids(),
     color: 0xaa5522,
     size: 0.13,
+  },
+  extPyramid: {
+    label: "外接金字塔修正（1+9）",
+    points: correctedExternalPyramidPoints(),
+    color: 0xcc6633,
+    size: 0.14,
   },
 };
 
@@ -184,6 +216,7 @@ function rebuild() {
   let total = 0;
   const candidates = [
     ["l1", "show-l1"],
+    ["extPyramid", "show-ext-pyramid"],
   ];
 
   candidates.forEach(([id, checkId]) => {
