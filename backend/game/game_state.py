@@ -25,6 +25,16 @@ class GameState:
         self.scores: dict = {i: 0 for i in range(1, config.players + 1)}
         self.temp_scores: dict = {i: 0 for i in range(1, config.players + 1)}
 
+    @property
+    def step_count(self) -> int:
+        return len(self.move_history)
+
+    @property
+    def round(self) -> int:
+        if not self.move_history:
+            return 0
+        return (len(self.move_history) - 1) // self.config.players + 1
+
     def legal_moves(self):
         return MoveGenerator(self.config).legal_moves(self.board, self.current_player)
 

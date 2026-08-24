@@ -32,6 +32,8 @@ def history_to_dict(state: Any) -> Dict[str, Any]:
         ],
         "scores": dict(state.scores),
         "temp_scores": dict(state.temp_scores),
+        "round": state.round,
+        "step_count": state.step_count,
     }
 
 
@@ -48,6 +50,8 @@ def state_to_dict(state: Any) -> Dict[str, Any]:
         },
         "current_player": state.current_player,
         "winner": state.winner,
+        "round": state.round,
+        "step_count": state.step_count,
         "scores": dict(state.scores),
         "temp_scores": dict(state.temp_scores),
         "bases": {

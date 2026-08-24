@@ -33,6 +33,8 @@ class StepResult:
     done: bool
     scores: dict
     temp_scores: dict
+    round: int
+    step_count: int
 
 
 class GameEnv:
@@ -77,6 +79,8 @@ class GameEnv:
             done=self.state.winner is not None,
             scores=dict(self.state.scores),
             temp_scores=dict(self.state.temp_scores),
+            round=self.state.round,
+            step_count=self.state.step_count,
         )
 
     def state_dict(self) -> dict:

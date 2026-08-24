@@ -308,10 +308,12 @@ function renderScoreBoard(board) {
 
 function updateHud(board) {
   const status = document.getElementById("status-text");
+  const round = board.round || 1;
+  const step = board.step_count || 0;
   if (board.winner) {
     status.textContent = `玩家 ${board.winner} 获胜！`;
   } else {
-    status.textContent = `当前玩家：${board.current_player} · 点击本方棋子查看合法路径`;
+    status.textContent = `第 ${round} 轮 · 第 ${step} 步 · 当前玩家：${board.current_player} · 点击本方棋子查看合法路径`;
   }
   updatePlayerRoster(board.config, board.current_player);
   renderScoreBoard(board);
