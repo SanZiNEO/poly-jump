@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PolyJump · C 模型 20 向探索</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <section id="preview-page" class="page">
+    <header class="menu-header">
+      <h1>C 模型 · 20 向探索</h1>
+      <p class="subtitle">12 向 + 8 向 = 20 向，观察能连成什么图形</p>
+    </header>
+
+    <div class="preview-layout">
+      <div class="preview-controls">
+        <h2>候选点集</h2>
+        <label class="switch-row">
+          <input type="checkbox" id="show-cube" checked>
+          <span>5×5×5 全整数立方格</span>
+        </label>
+        <label class="switch-row">
+          <input type="checkbox" id="show-l1">
+          <span>L1 球 R=6 全整数点</span>
+        </label>
+        <label class="switch-row">
+          <input type="checkbox" id="show-pyramids">
+          <span>立方体 + 六个外部金字塔（全点）</span>
+        </label>
+        <hr>
+        <label class="switch-row">
+          <input type="checkbox" id="show-lines" checked>
+          <span>显示 20 向连线</span>
+        </label>
+        <div class="preview-stats">
+          <strong>当前点数</strong>
+          <span id="point-count">0</span>
+        </div>
+        <p class="hint">鼠标左键旋转 / 右键平移 / 滚轮缩放</p>
+      </div>
+      <div id="preview-scene"></div>
+    </div>
+  </section>
+
+  <script type="module" src="/c_model_preview.js"></script>
+</body>
+</html>
