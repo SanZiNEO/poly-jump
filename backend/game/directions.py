@@ -1,6 +1,7 @@
 """移动方向常量与解析。
 
-集中管理 6/8/12/14/18/20/26 向和自定义向量的展开逻辑。
+方向定义来自 configs/directions.json（通过 direction_registry 加载），
+不写死在业务代码中。
 """
 
 from __future__ import annotations
@@ -8,25 +9,17 @@ from __future__ import annotations
 from itertools import product
 from typing import Dict, Iterable, List, Tuple
 
+from .direction_registry import load_base_sets
+
 Vector = Tuple[int, int, int]
 
-AXIS6: List[Vector] = [
-    (1, 0, 0), (-1, 0, 0),
-    (0, 1, 0), (0, -1, 0),
-    (0, 0, 1), (0, 0, -1),
-]
+_BASE_SETS = load_base_sets()
 
-FACE12: List[Vector] = [
-    (1, 1, 0), (1, -1, 0), (-1, 1, 0), (-1, -1, 0),
-    (1, 0, 1), (1, 0, -1), (-1, 0, 1), (-1, 0, -1),
-    (0, 1, 1), (0, 1, -1), (0, -1, 1), (0, -1, -1),
-]
+AXIS6: List[Vector] = _BASE_SETS[6]
+FACE12: List[Vector] = _BASE_SETS[12]
+BODY8: List[Vector] = _BASE_SETS[8]
 
-BODY8: List[Vector] = [
-    (1, 1, 1), (1, 1, -1), (1, -1, 1), (1, -1, -1),
-    (-1, 1, 1), (-1, 1, -1), (-1, -1, 1), (-1, -1, -1),
-]
-
+# 组合方向：由基础方向集自动组合
 DIRECTION_SETS: Dict[int, List[Vector]] = {
     6: AXIS6,
     8: BODY8,

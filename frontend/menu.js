@@ -1,20 +1,6 @@
 // 主菜单：收集表单配置 -> POST /api/game/new -> 进入游戏页
 window.__polyJump = { gameId: null, state: null };
 
-function parseCustomVectors(text) {
-  return text
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0)
-    .map((line) => {
-      const parts = line.split(",").map((s) => parseInt(s.trim(), 10));
-      if (parts.length !== 3 || parts.some((v) => Number.isNaN(v))) {
-        throw new Error("自定义向量格式错误：" + line);
-      }
-      return parts;
-    });
-}
-
 function boardSize() {
   return [
     parseInt(document.getElementById("board-x").value, 10),
@@ -26,7 +12,6 @@ function boardSize() {
 function autoLayers() {
   const [x, y, z] = boardSize();
   const minSide = Math.min(x, y, z);
-  // 用户规则：层数 = max(2, floor(最短边 / 2))
   return Math.max(2, Math.floor(minSide / 2));
 }
 
@@ -43,25 +28,74 @@ function updateGeometryFields() {
 
 function selectedDirections() {
   return Array.from(
-    document.querySelectorAll("input[data-dir]:checked")
+    document.querySelectorAll('input[data-type="base"]:checked')
   ).map((el) => parseInt(el.dataset.dir, 10));
+}
+
+function selectedCustomVectors() {
+  return Array.from(
+    document.querySelectorAll('input[data-type="custom"]:checked')
+  ).map((el) => el.dataset.vector.split(",").map(Number));
 }
 
 function updateDirectionSummary() {
   const dirs = selectedDirections();
-  const total = dirs.reduce((sum, d) => sum + d, 0);
-  const label = dirs.length ? dirs.join(" + ") : "未选择";
-  const text = dirs.length
-    ? `当前：${label} = ${total} 向`
-    : "请至少选择一种基础方向";
+  const customs = selectedCustomVectors();
+  const parts = [];
+  if (dirs.length) parts.push(dirs.join(" + "));
+  customs.forEach((v) => parts.push(`自定义 ${v.join(":")}`));
+  const text = parts.length
+    ? `当前：${parts.join(" + ")}`
+    : "请至少选择一种移动方向";
   document.getElementById("direction-summary").textContent = text;
+}
+
+async function loadDirectionSets() {
+  const wrap = document.getElementById("direction-checks");
+  const summary = document.getElementById("direction-summary");
+  try {
+    const res = await fetch("/api/direction-sets");
+    if (!res.ok) throw new Error("加载方向规则失败");
+    const sets = await res.json();
+    wrap.innerHTML = "";
+
+    sets.forEach((set) => {
+      const label = document.createElement("label");
+      label.className = "switch-row";
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      if (set.type === "base") {
+        cb.dataset.type = "base";
+        cb.dataset.dir = set.id;
+        // 默认勾选 6 向和 12 向，方便直接开局
+        cb.checked = set.id === "6" || set.id === "12";
+      } else {
+        cb.dataset.type = "custom";
+        cb.dataset.vector = set.vector.join(",");
+      }
+
+      const span = document.createElement("span");
+      span.textContent = set.name;
+
+      label.appendChild(cb);
+      label.appendChild(span);
+      wrap.appendChild(label);
+      cb.addEventListener("change", updateDirectionSummary);
+    });
+
+    updateDirectionSummary();
+  } catch (e) {
+    summary.textContent = e.message;
+  }
 }
 
 function readConfig() {
   const geometry = document.getElementById("geometry").value;
   const dirs = selectedDirections();
-  if (geometry === "A" && dirs.length === 0) {
-    throw new Error("请至少选择一种基础方向");
+  const customs = selectedCustomVectors();
+  if (geometry === "A" && dirs.length === 0 && customs.length === 0) {
+    throw new Error("请至少选择一种移动方向");
   }
 
   const players = parseInt(document.getElementById("players").value, 10);
@@ -80,7 +114,7 @@ function readConfig() {
     b_radius: bRadius,
     players,
     direction_set: geometry === "B" ? [12] : dirs,
-    custom_vectors: geometry === "B" ? [] : parseCustomVectors(document.getElementById("custom-vectors").value),
+    custom_vectors: geometry === "B" ? [] : customs,
     movement: {
       allow_step: document.getElementById("allow-step").checked,
       allow_jump: document.getElementById("allow-jump").checked,
@@ -158,10 +192,6 @@ document.getElementById("back-btn").addEventListener("click", () => {
   document.getElementById(id).addEventListener("input", updateLayers);
 });
 
-document.querySelectorAll("input[data-dir]").forEach((el) => {
-  el.addEventListener("change", updateDirectionSummary);
-});
-
 document.getElementById("geometry").addEventListener("change", () => {
   updateGeometryFields();
   if (document.getElementById("geometry").value === "A") {
@@ -171,4 +201,4 @@ document.getElementById("geometry").addEventListener("change", () => {
 
 updateGeometryFields();
 updateLayers();
-updateDirectionSummary();
+loadDirectionSets();

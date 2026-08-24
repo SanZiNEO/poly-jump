@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from .game.ai import RandomAI
 from .game.config import PolyJumpConfig
+from .game.direction_registry import get_available_sets
 from .game.game_state import GameState
 from .game.serializers import path_to_lists, state_to_dict
 
@@ -41,6 +42,11 @@ def _get_state(game_id: str) -> GameState:
 @app.get("/api/config")
 def get_config():
     return PolyJumpConfig().model_dump()
+
+
+@app.get("/api/direction-sets")
+def get_direction_sets():
+    return get_available_sets()
 
 
 @app.post("/api/game/new", status_code=201)

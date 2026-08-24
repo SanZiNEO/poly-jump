@@ -73,29 +73,11 @@
 
       <div class="menu-section">
         <h2>移动方向</h2>
-        <p class="hint">三种基础方向独立开关，系统自动组合。</p>
+        <p class="hint">方向规则由后端配置提供，前端自动扫描。</p>
 
-        <div class="switch-list">
-          <label class="switch-row">
-            <input type="checkbox" data-dir="6" checked>
-            <span>6 向 <small>轴方向</small></span>
-          </label>
-          <label class="switch-row">
-            <input type="checkbox" data-dir="12" checked>
-            <span>12 向 <small>面对角</small></span>
-          </label>
-          <label class="switch-row">
-            <input type="checkbox" data-dir="8" checked>
-            <span>8 向 <small>体对角</small></span>
-          </label>
-        </div>
+        <div id="direction-checks" class="switch-list"></div>
 
-        <p id="direction-summary" class="summary">当前：6 + 12 + 8 = 26 向</p>
-
-        <label class="field">
-          <span>自定义向量（一行一个，如 2,1,0）</span>
-          <textarea id="custom-vectors" rows="3" placeholder="2,1,0&#10;2,2,1"></textarea>
-        </label>
+        <p id="direction-summary" class="summary">加载方向规则中...</p>
       </div>
 
       <div class="menu-section">
