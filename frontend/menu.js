@@ -28,6 +28,12 @@ function updateGeometryFields() {
   document.getElementById("b-radius-field").classList.toggle("hidden", !isB);
   document.getElementById("layers-field").classList.toggle("hidden", isB);
   document.getElementById("layers-hint").classList.toggle("hidden", isB);
+  document.getElementById("direction-section").classList.toggle("hidden", isB);
+  if (isB) {
+    document.getElementById("direction-summary").textContent = "B 模型固定 12 向";
+  } else {
+    updateDirectionSummary();
+  }
 }
 
 function selectedDirections() {
