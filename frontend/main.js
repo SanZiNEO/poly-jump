@@ -176,10 +176,12 @@ function getDotTexture() {
 }
 
 // 所有空格点合并为单个 THREE.Points，大幅减少 draw call
-function buildPointCloud(points, pieces) {
+function buildPointCloud(points, pieces, excludeKeys) {
   const positions = [];
   points.forEach((pos) => {
-    if (pieces && pieces[keyOf(pos)] != null) return;
+    const key = keyOf(pos);
+    if (pieces && pieces[key] != null) return;
+    if (excludeKeys && excludeKeys.has(key)) return;
     positions.push(pos[0], pos[1], pos[2]);
   });
   const geo = new THREE.BufferGeometry();
@@ -190,6 +192,23 @@ function buildPointCloud(points, pieces) {
     sizeAttenuation: true,
     map: getDotTexture(),
     transparent: true,
+  });
+  return new THREE.Points(geo, mat);
+}
+
+// 基地点按玩家颜色渲染，方便在抽象几何中辨认起始区域
+function buildBasePointCloud(points, color) {
+  const positions = [];
+  points.forEach((p) => positions.push(p[0], p[1], p[2]));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({
+    color,
+    size: 0.12,
+    sizeAttenuation: true,
+    map: getDotTexture(),
+    transparent: true,
+    opacity: 0.8,
   });
   return new THREE.Points(geo, mat);
 }
@@ -227,7 +246,20 @@ function renderBoard(board) {
   clearGroup(state.highlightGroup);
 
   rebuildRoutes(board.routes || []);
-  state.pointGroup.add(buildPointCloud(board.points || [], board.pieces));
+
+  const bases = board.bases || {};
+  const baseKeys = new Set();
+  Object.values(bases).forEach((list) => {
+    list.forEach((p) => baseKeys.add(keyOf(p)));
+  });
+
+  state.pointGroup.add(buildPointCloud(board.points || [], board.pieces, baseKeys));
+
+  Object.entries(bases).forEach(([playerStr, list]) => {
+    const player = Number(playerStr);
+    const color = PLAYER_COLORS[player] || 0xffffff;
+    state.pointGroup.add(buildBasePointCloud(list, color));
+  });
 
   Object.entries(board.pieces || {}).forEach(([key, player]) => {
     const pos = parseKey(key);

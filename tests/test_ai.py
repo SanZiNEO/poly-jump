@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from backend.game.ai import GreedyAI, ProgressAI, RandomAI
+from backend.game.ai import GraphProgressAI, GreedyAI, ProgressAI, RandomAI
 from backend.game.board import Board
 from backend.game.config import PolyJumpConfig
 
@@ -51,3 +51,13 @@ def test_progress_ai_prefers_longer_chain_forward():
     # 简单验证：连跳路径评分不低于普通前进
     ai = ProgressAI()
     assert ai._count_captures(board, [(0, 0, 0), (4, 0, 0)], [(1, 0, 0)], 1) == 1
+
+
+def test_graph_progress_ai_picks_forward():
+    board = make_board()
+    paths = [
+        [(0, 0, 0), (1, 0, 0)],
+        [(0, 0, 0), (0, 1, 0)],
+    ]
+    chosen = GraphProgressAI().select_move(board, 1, paths)
+    assert chosen == [(0, 0, 0), (1, 0, 0)]

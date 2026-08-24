@@ -6,7 +6,8 @@
 from __future__ import annotations
 
 import random
-from typing import List, Optional, Sequence
+from collections import deque
+from typing import Dict, List, Optional, Sequence
 
 from .board import Board
 from .directions import resolve_direction_set
@@ -132,3 +133,76 @@ class ProgressAI:
             if owner is not None and owner != player:
                 count += 1
         return count
+
+
+class GraphProgressAI(ProgressAI):
+    """使用真实图距离（BFS）的贪心 AI。
+
+    在 B/C/D 等抽象几何下，坐标曼哈顿距离会失真，
+    改用“沿该几何实际移动方向到达目标区的步数”作为距离。
+    """
+
+    def select_move(
+        self,
+        board: Board,
+        player: int,
+        legal_paths: List[Sequence[Sequence[int]]],
+    ) -> Optional[list]:
+        if not legal_paths:
+            return None
+
+        target = board.player_targets.get(player, set())
+        if not target:
+            return random.choice(list(legal_paths))
+
+        directions = resolve_direction_set(
+            board.config.direction_set, board.config.custom_vectors
+        )
+        dist = self._distance_map(board, target, directions)
+
+        def score(path: Sequence[Sequence[int]]) -> float:
+            start = path[0]
+            end = path[-1]
+            before = dist.get(tuple(start))
+            after = dist.get(tuple(end))
+            if before is None or after is None:
+                progress = 0.0
+            else:
+                progress = float(before - after)
+
+            chain = max(0, len(path) - 2) * self.chain_bonus
+            captures = self._count_captures(board, path, directions, player)
+            capture_gain = captures * self.capture_bonus
+
+            if progress < 0:
+                return progress + chain + capture_gain - abs(progress) * self.backward_penalty
+            return progress + chain + capture_gain
+
+        return max(legal_paths, key=score)
+
+    @staticmethod
+    def _distance_map(
+        board: Board,
+        targets: set,
+        directions,
+    ) -> Dict[tuple, int]:
+        points = set(board.points)
+        dist: Dict[tuple, int] = {}
+        q: deque = deque()
+
+        for t in targets:
+            key = tuple(t)
+            if key in points:
+                dist[key] = 0
+                q.append(key)
+
+        while q:
+            p = q.popleft()
+            d = dist[p]
+            for v in directions:
+                n = (p[0] + v[0], p[1] + v[1], p[2] + v[2])
+                if n in points and n not in dist:
+                    dist[n] = d + 1
+                    q.append(n)
+
+        return dist
