@@ -77,6 +77,11 @@
           </select>
         </label>
 
+        <label class="field">
+          <span data-i18n="ai_players_label">AI 玩家（开局设置）</span>
+          <div id="ai-player-menu" class="switch-list"></div>
+        </label>
+
         <label class="field" id="layers-field">
           <span data-i18n="layers_label">棋子层数（推荐最大值）</span>
           <input id="layers" type="number" value="4" min="1" max="4" step="1">
@@ -130,11 +135,6 @@
             <option value="CAPTURE" data-i18n="mode_capture">西洋跳棋（吃光对方）</option>
             <option value="MIXED" data-i18n="mode_mixed">混合模式（搬运为主，吃子送回原位）</option>
           </select>
-        </label>
-
-        <label class="field">
-          <span data-i18n="ai_players_label">AI 玩家（开局设置）</span>
-          <div id="ai-player-menu" class="switch-list"></div>
         </label>
 
         <button id="start-btn" class="primary-btn" data-i18n="start_game">开始游戏</button>

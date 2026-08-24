@@ -298,6 +298,8 @@ document.getElementById("geometry").addEventListener("change", () => {
   }
 });
 
+document.getElementById("players").addEventListener("change", renderAIPlayerMenu);
+
 document.getElementById("lang-select").addEventListener("change", (e) => {
   applyLanguage(e.target.value);
 });
