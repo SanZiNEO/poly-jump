@@ -9,14 +9,18 @@ function boardSize() {
   ];
 }
 
-function autoLayers() {
+function maxLayers() {
   const [x, y, z] = boardSize();
   const minSide = Math.min(x, y, z);
   return Math.max(2, Math.floor(minSide / 2));
 }
 
 function updateLayers() {
-  document.getElementById("layers").value = autoLayers();
+  const input = document.getElementById("layers");
+  const max = maxLayers();
+  input.max = max;
+  const current = parseInt(input.value, 10);
+  input.value = Number.isNaN(current) ? max : Math.min(Math.max(current, 1), max);
 }
 
 function updateGeometryFields() {
@@ -114,6 +118,12 @@ function readConfig() {
     throw new Error("B 模型第一版支持 2 / 3 / 4 / 6 人");
   }
 
+  const layers = parseInt(document.getElementById("layers").value, 10);
+  const layersMax = maxLayers();
+  if (geometry === "A" && (layers < 1 || layers > layersMax)) {
+    throw new Error(`A 模型棋子层数不能超过 ${layersMax} 层`);
+  }
+
   return {
     game_name: "PolyJump",
     geometry,
@@ -142,7 +152,7 @@ function readConfig() {
     },
     initial_layout: {
       shape: "TETRA_PYRAMID",
-      layers: parseInt(document.getElementById("layers").value, 10),
+      layers,
     },
   };
 }
