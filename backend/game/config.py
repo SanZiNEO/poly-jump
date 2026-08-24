@@ -64,10 +64,11 @@ class RenderConfig(BaseModel):
 
 class PolyJumpConfig(BaseModel):
     game_name: str = "PolyJump"
-    geometry: Literal["A", "B", "C"] = "A"
+    geometry: Literal["A", "B", "C", "D", "B_EXT", "C_EXT", "A_EXT"] = "A"
     board_size: Tuple[int, int, int] = (9, 9, 9)
     b_radius: int = 6
     c_radius: int = 6
+    ep_side: int = 5
     players: int = 2
     direction_set: Union[int, List[int]] = Field(default_factory=lambda: [6, 12, 8])
     custom_vectors: List[Tuple[int, int, int]] = Field(default_factory=list)
@@ -122,6 +123,25 @@ class PolyJumpConfig(BaseModel):
                 raise ValueError("C 模型支持 2 / 3 / 4 / 6 人")
             # C 模型固定为 12 + 8 = 20 向
             self.direction_set = [20]
+        elif self.geometry == "D":
+            if self.players not in (2, 3, 4, 6):
+                raise ValueError("D 模型支持 2 / 3 / 4 / 6 人")
+            self.direction_set = [14]
+        elif self.geometry == "B_EXT":
+            if self.players not in (2, 3, 4, 6):
+                raise ValueError("B-ext 模型支持 2 / 3 / 4 / 6 人")
+            self.direction_set = [12]
+        elif self.geometry == "C_EXT":
+            if self.players not in (2, 3, 4, 6):
+                raise ValueError("C-ext 模型支持 2 / 3 / 4 / 6 人")
+            self.direction_set = [20]
+        elif self.geometry == "A_EXT":
+            if self.players not in (2, 3, 4, 6):
+                raise ValueError("A-ext 模型支持 2 / 3 / 4 / 6 人")
+            # 方向不固定，沿用 direction_set
+        if self.geometry in ("A_EXT", "B_EXT", "C_EXT", "D"):
+            if self.ep_side % 2 == 0 or self.ep_side < 3:
+                raise ValueError("外接金字塔中心边长 ep_side 必须为奇数且 >= 3")
         return self
 
     def resolved_direction_set(self) -> List[int]:

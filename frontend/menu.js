@@ -23,12 +23,12 @@ function updateLayers() {
   input.value = Number.isNaN(current) ? max : Math.min(Math.max(current, 1), max);
 }
 
-function updatePlayerOptions(isL1) {
+function updatePlayerOptions(isFixedPlayers) {
   const select = document.getElementById("players");
   const current = parseInt(select.value, 10);
-  const allowed = isL1 ? [2, 3, 4, 6] : [2, 3, 4, 6, 8];
+  const allowed = isFixedPlayers ? [2, 3, 4, 6] : [2, 3, 4, 6, 8];
 
-  // 如果从 A 的 8 人切到 B/C，自动落到 6 人
+  // 如果从 A 的 8 人切到固定玩家数模型，自动落到 6 人
   const next = allowed.includes(current) ? current : allowed[allowed.length - 1];
 
   select.innerHTML = "";
@@ -44,21 +44,25 @@ function updatePlayerOptions(isL1) {
 function updateGeometryFields() {
   const geometry = document.getElementById("geometry").value;
   const isL1 = geometry === "B" || geometry === "C";
+  const isExt = ["A_EXT", "B_EXT", "C_EXT", "D"].includes(geometry);
+  // A-ext 方向可配置，其余外接模型方向固定
+  const isFixedDirection = isL1 || (isExt && geometry !== "A_EXT");
+  const isFixedPlayers = isL1 || isExt;
 
   document.getElementById("b-radius-field").classList.toggle("hidden", !isL1);
-  document.getElementById("layers-field").classList.toggle("hidden", isL1);
-  document.getElementById("layers-hint").classList.toggle("hidden", isL1);
-  document.getElementById("direction-section").classList.toggle("hidden", isL1);
-  updatePlayerOptions(isL1);
+  document.getElementById("ep-side-field").classList.toggle("hidden", !isExt);
+  document.getElementById("layers-field").classList.toggle("hidden", isFixedPlayers);
+  document.getElementById("layers-hint").classList.toggle("hidden", isFixedPlayers);
+  document.getElementById("direction-section").classList.toggle("hidden", isFixedDirection);
+  updatePlayerOptions(isFixedPlayers);
 
   const summary = document.getElementById("direction-summary");
-  if (geometry === "B") {
-    summary.textContent = "B 模型固定 12 向";
-  } else if (geometry === "C") {
-    summary.textContent = "C 模型固定 20 向";
-  } else {
-    updateDirectionSummary();
-  }
+  if (geometry === "B") summary.textContent = "B 模型固定 12 向";
+  else if (geometry === "C") summary.textContent = "C 模型固定 20 向";
+  else if (geometry === "D") summary.textContent = "D 模型固定 14 向";
+  else if (geometry === "B_EXT") summary.textContent = "B-ext 固定 12 向";
+  else if (geometry === "C_EXT") summary.textContent = "C-ext 固定 20 向";
+  else updateDirectionSummary();
 }
 
 function selectedDirections() {
@@ -142,12 +146,19 @@ function readConfig() {
 
   const players = parseInt(document.getElementById("players").value, 10);
   const bRadius = parseInt(document.getElementById("b-radius").value, 10);
+  const epSide = parseInt(document.getElementById("ep-side").value, 10);
   const isL1 = geometry === "B" || geometry === "C";
+  const isExt = ["A_EXT", "B_EXT", "C_EXT", "D"].includes(geometry);
+  const isFixed = isL1 || isExt;
+
   if (isL1 && (bRadius <= 0 || bRadius % 2 !== 0)) {
     throw new Error("L1 球半径必须为正偶数");
   }
-  if (isL1 && players === 8) {
-    throw new Error("B/C 模型支持 2 / 3 / 4 / 6 人");
+  if (isExt && (epSide < 3 || epSide % 2 === 0)) {
+    throw new Error("外接金字塔中心边长必须为奇数且 >= 3");
+  }
+  if (isFixed && players === 8) {
+    throw new Error("B/C/D/A-ext 模型支持 2 / 3 / 4 / 6 人");
   }
 
   const layers = parseInt(document.getElementById("layers").value, 10);
@@ -156,15 +167,23 @@ function readConfig() {
     throw new Error(`A 模型棋子层数不能超过 ${layersMax} 层`);
   }
 
+  const fixedDirection =
+    geometry === "B" ? [12] :
+    geometry === "C" ? [20] :
+    geometry === "D" ? [14] :
+    geometry === "B_EXT" ? [12] :
+    geometry === "C_EXT" ? [20] : null;
+
   return {
     game_name: "PolyJump",
     geometry,
     board_size: boardSize(),
     b_radius: bRadius,
     c_radius: bRadius,
+    ep_side: epSide,
     players,
-    direction_set: geometry === "B" ? [12] : geometry === "C" ? [20] : dirs,
-    custom_vectors: isL1 ? [] : customs,
+    direction_set: fixedDirection !== null ? fixedDirection : dirs,
+    custom_vectors: fixedDirection !== null ? [] : customs,
     movement: {
       allow_step: document.getElementById("allow-step").checked,
       allow_jump: document.getElementById("allow-jump").checked,

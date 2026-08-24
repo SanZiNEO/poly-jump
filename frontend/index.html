@@ -31,6 +31,10 @@
             <option value="A" selected>A 模型 · 正交网格</option>
             <option value="B">B 模型 · FCC 偶子晶格</option>
             <option value="C">C 模型 · L1 全整数 20 向</option>
+            <option value="A_EXT">A-ext · 外接金字塔方向可配</option>
+            <option value="D">D 模型 · 外接金字塔 14 向</option>
+            <option value="B_EXT">B-ext · 外接金字塔 12 向</option>
+            <option value="C_EXT">C-ext · 外接金字塔 20 向</option>
           </select>
         </label>
 
@@ -52,6 +56,10 @@
         <label class="field hidden" id="b-radius-field">
           <span>L1 球半径（偶数）</span>
           <input id="b-radius" type="number" value="6" min="2" max="10" step="2">
+        </label>
+        <label class="field hidden" id="ep-side-field">
+          <span>外接金字塔中心边长（奇数）</span>
+          <input id="ep-side" type="number" value="5" min="3" max="9" step="2">
         </label>
 
         <label class="field">
