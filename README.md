@@ -57,7 +57,7 @@ python -m backend.game.headless --config configs/a_2p_6dir.json --moves 10
 3. Space 默认启动：
 
 ```text
-http://0.0.0.0:8000
+http://0.0.0.0:7860
 ```
 
 Space 内只包含游戏本体，不包含 AI 训练内容。
