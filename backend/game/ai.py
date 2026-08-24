@@ -240,6 +240,21 @@ class ScoringAwareAI(GraphProgressAI):
         )
         dist = self._distance_map(board, target, directions) if target else {}
 
+        target_weight = 2.0
+        path_penalty = 0.5
+        enemy_base_penalty = 10.0
+
+        def victory_bonus(path: Sequence[Sequence[int]]) -> float:
+            start = path[0]
+            end = path[-1]
+            new_pieces = [
+                p for p in board.pieces_for_player(player) if tuple(p) != tuple(start)
+            ]
+            new_pieces.append(end)
+            if all(tuple(p) in target for p in new_pieces):
+                return float(scoring.first_finish_reward)
+            return 0.0
+
         def score(path: Sequence[Sequence[int]]) -> float:
             start = path[0]
             end = path[-1]
@@ -257,17 +272,48 @@ class ScoringAwareAI(GraphProgressAI):
             captures = self._count_captures(board, path, directions, player)
             capture_score = captures * scoring.capture_points
 
-            target_score = 0
+            target_score = 0.0
             if (
                 target
                 and tuple(start) not in target
                 and tuple(end) in target
             ):
-                target_score = scoring.target_zone_points
+                target_score = scoring.target_zone_points * target_weight
+
+            win_score = victory_bonus(path)
+
+            # 路径长度惩罚
+            length_penalty = max(0, len(path) - 2) * path_penalty
+
+            # 无效进入敌基地（最终未停在目标区）
+            base_penalty = 0.0
+            if (
+                target
+                and tuple(end) not in target
+                and any(tuple(p) in target for p in path[1:-1])
+            ):
+                base_penalty = enemy_base_penalty
 
             if progress < 0:
-                return progress + chain_score + capture_score + target_score - abs(progress) * self.backward_penalty
+                return (
+                    progress
+                    + chain_score
+                    + capture_score
+                    + target_score
+                    + win_score
+                    - abs(progress) * self.backward_penalty
+                    - length_penalty
+                    - base_penalty
+                )
 
-            return progress + chain_score + capture_score + target_score
+            return (
+                progress
+                + chain_score
+                + capture_score
+                + target_score
+                + win_score
+                - length_penalty
+                - base_penalty
+            )
 
         return max(legal_paths, key=score)
