@@ -217,3 +217,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local planning files (not part of repository)
+progress.md
+task_plan.md
+findings.md
