@@ -67,6 +67,7 @@ class ScoringConfig(BaseModel):
     first_finish_reward: int = 10
     chain_jump_points: int = 1
     chain_temp: bool = True
+    chain_max_scoring: int = 0  # 0 = 不限制；正整数 = 连跳最多计分次数
     capture_points: int = 2
     target_zone_points: int = 1
     survivor_piece_points: int = 1

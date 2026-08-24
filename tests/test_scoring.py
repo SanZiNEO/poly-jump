@@ -27,6 +27,20 @@ def test_chain_jump_scores_by_extra_jumps():
     assert result["chain_temp"] == 2
 
 
+def test_chain_scoring_cap_limits_scored_jumps():
+    cfg = PolyJumpConfig(
+        board_size=(9, 9, 9),
+        players=2,
+        direction_set=[6],
+        scoring=ScoringConfig(enabled=True, chain_jump_points=1, chain_max_scoring=5),
+    )
+    engine = ScoringEngine(cfg)
+    # 实际连跳 10 次，但计分上限 5
+    path = [[0, 0, 0]] + [[i * 2, 0, 0] for i in range(1, 11)]
+    result = engine.assess_move(1, path)
+    assert result["chain_temp"] == 5
+
+
 def test_target_zone_points():
     engine = make_engine()
     result = engine.assess_move(1, [[0, 0, 0], [1, 0, 0]], reached_target=True)

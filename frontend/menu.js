@@ -235,6 +235,16 @@ function readConfig() {
       shape: "TETRA_PYRAMID",
       layers,
     },
+    scoring: {
+      enabled: document.getElementById("scoring-enabled").checked,
+      first_finish_reward: parseInt(document.getElementById("first-finish-reward").value, 10),
+      chain_jump_points: parseInt(document.getElementById("chain-jump-points").value, 10),
+      chain_temp: document.getElementById("chain-temp").checked,
+      chain_max_scoring: parseInt(document.getElementById("chain-max-scoring").value, 10),
+      capture_points: parseInt(document.getElementById("capture-points").value, 10),
+      target_zone_points: parseInt(document.getElementById("target-zone-points").value, 10),
+      survivor_piece_points: parseInt(document.getElementById("survivor-piece-points").value, 10),
+    },
   };
 }
 

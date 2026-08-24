@@ -140,6 +140,45 @@
         <button id="start-btn" class="primary-btn" data-i18n="start_game">开始游戏</button>
         <p id="menu-error" class="error"></p>
       </div>
+
+      <div class="menu-section" id="scoring-section">
+        <h2 data-i18n="scoring_section">积分</h2>
+
+        <label class="switch-row">
+          <input type="checkbox" id="scoring-enabled">
+          <span data-i18n="scoring_enabled">启用积分系统</span>
+        </label>
+
+        <label class="field">
+          <span data-i18n="chain_jump_score">连跳每跳加分</span>
+          <input id="chain-jump-points" type="number" value="1" min="0" max="100">
+        </label>
+        <label class="field">
+          <span data-i18n="chain_max_scoring">连跳计分上限（0=不限制）</span>
+          <input id="chain-max-scoring" type="number" value="0" min="0" max="100">
+        </label>
+        <label class="switch-row">
+          <input type="checkbox" id="chain-temp" checked>
+          <span data-i18n="chain_temp_label">连跳使用临时分</span>
+        </label>
+
+        <label class="field">
+          <span data-i18n="capture_score">吃子每次加分</span>
+          <input id="capture-points" type="number" value="2" min="0" max="100">
+        </label>
+        <label class="field">
+          <span data-i18n="target_zone_score">进入目标区加分</span>
+          <input id="target-zone-points" type="number" value="1" min="0" max="100">
+        </label>
+        <label class="field">
+          <span data-i18n="win_reward">胜利奖励</span>
+          <input id="first-finish-reward" type="number" value="10" min="0" max="1000">
+        </label>
+        <label class="field">
+          <span data-i18n="survivor_score">西洋棋存活棋子分</span>
+          <input id="survivor-piece-points" type="number" value="1" min="0" max="100">
+        </label>
+      </div>
     </div>
   </section>
 

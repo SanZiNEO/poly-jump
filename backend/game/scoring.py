@@ -32,6 +32,9 @@ class ScoringEngine:
         - target_points：进入目标区分
         """
         chain_jumps = max(0, len(path) - 1) if len(path) > 2 else 0
+        # 只限制计分的连跳次数，不限制连跳本身长度
+        if self.scoring.chain_max_scoring > 0:
+            chain_jumps = min(chain_jumps, self.scoring.chain_max_scoring)
         chain_temp = 0
         if self.scoring.enabled and self.scoring.chain_temp:
             chain_temp = chain_jumps * self.scoring.chain_jump_points
