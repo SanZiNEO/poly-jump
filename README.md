@@ -39,11 +39,15 @@ PolyJump 是一个可配置的三维跳棋框架。
 | 实现指南 | [docs/10-implementation-guide.md](./docs/10-implementation-guide.md) |
 | 参考项目 | [docs/11-references.md](./docs/11-references.md) |
 
-## 项目规划
+## 后端可编程接口
 
-- [`task_plan.md`](./task_plan.md)：阶段计划
-- [`findings.md`](./findings.md)：研究记录
-- [`progress.md`](./progress.md)：进度日志
+游戏规则引擎可以脱离前端单独运行，通过 JSON 配置启动：
+
+```powershell
+python -m backend.game.headless --config configs/a_2p_6dir.json --moves 10
+```
+
+示例配置位于 [`configs/`](./configs/)。
 
 ## License
 

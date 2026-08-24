@@ -1,0 +1,29 @@
+{
+  "game_name": "PolyJump",
+  "geometry": "A",
+  "board_size": [9, 9, 9],
+  "players": 2,
+  "direction_set": [6],
+  "movement": {
+    "allow_step": true,
+    "allow_jump": true,
+    "allow_chain": true,
+    "hop_mode": "FREE_STOP",
+    "two_step_hop": false,
+    "max_chain_length": 0
+  },
+  "capture": {
+    "mode": "NONE",
+    "capture_opponent_only": true,
+    "mixed_swap": false
+  },
+  "goal": {
+    "objective": "FILL_TARGET",
+    "target_region": "OPPOSITE_CORNER",
+    "must_fill_all_cells": true
+  },
+  "initial_layout": {
+    "shape": "TETRA_PYRAMID",
+    "layers": 4
+  }
+}
