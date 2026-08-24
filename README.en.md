@@ -79,8 +79,8 @@ python -m backend.game.headless --config configs\a_2p_6dir.json --moves 10
 
 ## Documentation
 
-- Current implementation status: [docs/CURRENT.md](./docs/CURRENT.md)
-- Original design docs: [docs/README.md](./docs/README.md)
+- Current docs index: [docs/README.md](./docs/README.md)
+- Chinese README: [README.md](./README.md)
 
 ## License
 

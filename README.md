@@ -29,18 +29,14 @@ PolyJump 是一个可配置的三维跳棋框架。
 
 | 文档 | 内容 |
 |---|---|
-| 二维跳棋规则 | [docs/01-rules-2d-checkers.md](./docs/01-rules-2d-checkers.md) |
-| 三维跳棋规则 | [docs/02-rules-3d-jump-chess.md](./docs/02-rules-3d-jump-chess.md) |
-| A 模型几何 | [docs/03-geometry-model-a.md](./docs/03-geometry-model-a.md) |
-| B 模型几何 | [docs/04-geometry-model-b.md](./docs/04-geometry-model-b.md) |
-| 配置与开关 | [docs/05-configuration.md](./docs/05-configuration.md) |
-| 项目架构 | [docs/06-architecture.md](./docs/06-architecture.md) |
-| 动作表示 | [docs/07-action-representation.md](./docs/07-action-representation.md) |
-| 前端界面 | [docs/08-frontend-ui.md](./docs/08-frontend-ui.md) |
-| 可选小 AI | [docs/09-optional-ai.md](./docs/09-optional-ai.md) |
-| 实现指南 | [docs/10-implementation-guide.md](./docs/10-implementation-guide.md) |
-| 参考项目 | [docs/11-references.md](./docs/11-references.md) |
-| 当前实现状态 | [docs/CURRENT.md](./docs/CURRENT.md) |
+| 项目概览 | [docs/01-overview.md](./docs/01-overview.md) |
+| 几何模型 | [docs/02-geometry-models.md](./docs/02-geometry-models.md) |
+| 游戏规则 | [docs/03-game-rules.md](./docs/03-game-rules.md) |
+| 配置 | [docs/04-configuration.md](./docs/04-configuration.md) |
+| 接口 | [docs/05-interfaces.md](./docs/05-interfaces.md) |
+| 前端 | [docs/06-frontend.md](./docs/06-frontend.md) |
+| AI / 研究 | [docs/07-ai-and-research.md](./docs/07-ai-and-research.md) |
+| 参考资料 | [docs/08-references.md](./docs/08-references.md) |
 
 ## 后端可编程接口
 
