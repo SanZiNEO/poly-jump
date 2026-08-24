@@ -35,6 +35,13 @@ class CaptureHandler:
         if captured_owner == mover and self.config.capture_opponent_only:
             return
 
+        # 对方基地内默认不算吃子、不移除
+        if (
+            not self.config.capture_in_base
+            and captured_pos in board.player_bases.get(captured_owner, set())
+        ):
+            return
+
         if self.config.mode == CaptureMode.CAPTURE:
             board.remove_piece(captured_pos)
         elif self.config.mode == CaptureMode.MIXED:

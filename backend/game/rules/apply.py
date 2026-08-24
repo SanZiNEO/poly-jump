@@ -58,11 +58,18 @@ class MoveApplier:
 
             captured_owner = board.get_piece(captured_pos)
             if captured_owner is not None:
+                in_own_base = (
+                    captured_pos in board.player_bases.get(captured_owner, set())
+                )
                 if (
                     self.config.capture.mode.value != "NONE"
                     and (
                         not self.config.capture.capture_opponent_only
                         or captured_owner != player
+                    )
+                    and (
+                        self.config.capture.capture_in_base
+                        or not in_own_base
                     )
                 ):
                     capture_count += 1

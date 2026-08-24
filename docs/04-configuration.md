@@ -109,6 +109,7 @@ max_chain_length
 ```text
 capture.mode
 capture.capture_opponent_only
+capture.capture_in_base
 goal.objective
 goal.target_region
 goal.must_fill_all_cells

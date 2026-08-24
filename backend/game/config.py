@@ -37,6 +37,7 @@ class CaptureConfig(BaseModel):
     mode: CaptureMode = CaptureMode.NONE
     capture_opponent_only: bool = True
     mixed_swap: bool = False
+    capture_in_base: bool = False
 
 
 class GoalConfig(BaseModel):

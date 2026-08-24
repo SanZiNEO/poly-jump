@@ -131,6 +131,11 @@ class ProgressAI:
                 continue
             owner = board.get_piece(mid)
             if owner is not None and owner != player:
+                if (
+                    not board.config.capture.capture_in_base
+                    and mid in board.player_bases.get(owner, set())
+                ):
+                    continue
                 count += 1
         return count
 
