@@ -240,9 +240,9 @@ class ScoringAwareAI(GraphProgressAI):
         )
         dist = self._distance_map(board, target, directions) if target else {}
 
-        target_weight = 2.0
-        path_penalty = 0.5
-        enemy_base_penalty = 10.0
+        target_weight = 5.0
+        path_penalty = 2.0
+        enemy_base_penalty = 100.0
 
         def victory_bonus(path: Sequence[Sequence[int]]) -> float:
             start = path[0]
