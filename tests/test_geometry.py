@@ -44,3 +44,26 @@ def test_pyramid_outward_layers():
     assert (1, 0, 0) in home1
     assert (0, 1, 0) in home1
     assert (0, 0, 1) in home1
+
+
+def test_a_three_four_player_targets_empty():
+    for players, base_indices in [(3, [0, 4, 5]), (4, [0, 4, 5, 6])]:
+        geometry = make_geometry()
+        geometry.config.players = players
+        bases, targets = geometry.player_assignments()
+
+        base_positions = {p for base in bases.values() for p in base}
+        target_positions = {p for target in targets.values() for p in target}
+        assert base_positions.isdisjoint(target_positions)
+
+
+def test_a_six_eight_player_assignments():
+    for players in (6, 8):
+        geometry = make_geometry()
+        geometry.config.players = players
+        bases, targets = geometry.player_assignments()
+
+        assert len(bases) == players
+        assert len(targets) == players
+        all_base = [p for base in bases.values() for p in base]
+        assert len(all_base) == len(set(all_base))

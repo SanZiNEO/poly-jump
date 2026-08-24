@@ -56,12 +56,9 @@ class GeometryA(Geometry):
     def player_assignments(
         self,
     ) -> Tuple[Dict[int, List[Point]], Dict[int, List[Point]]]:
-        # TODO: 第一版只支持 2 人对角局；3/4/6/8 人需按 docs/05 显式基地/目标区分配。
-        if self.config.players != 2:
-            raise NotImplementedError(
-                "第一版仅支持 2 人局（A 模型对角金字塔）。"
-                "3/4/6/8 人局留待后续实现。"
-            )
+        players = self.config.players
+        if players not in (2, 3, 4, 6, 8):
+            raise ValueError(f"A 模型不支持 {players} 人局")
 
         layers = self.config.initial_layout.layers
         if layers <= 0:
@@ -76,12 +73,58 @@ class GeometryA(Geometry):
                 f"当前配置 {layers} 层"
             )
 
-        home1 = self._pyramid((0, 0, 0), layers, (1, 1, 1))
-        home2 = self._pyramid((self.a - 1, self.b - 1, self.c - 1), layers, (-1, -1, -1))
-        if not home1 or not home2:
-            raise ValueError("金字塔布局生成失败：棋盘可能太小或层数过大")
+        corners = self._corners()
+        player_corners = self._player_corner_indices(players)
 
-        return {1: home1, 2: home2}, {1: home2, 2: home1}
+        bases: Dict[int, List[Point]] = {}
+        targets: Dict[int, List[Point]] = {}
+        for player, corner_index in enumerate(player_corners, start=1):
+            corner = corners[corner_index]
+            signs = self._signs_for_corner(corner)
+            base = self._pyramid(corner, layers, signs)
+            if not base:
+                raise ValueError("金字塔布局生成失败：棋盘可能太小或层数过大")
+
+            target_index = self._opposite_index(corner_index)
+            target_corner = corners[target_index]
+            target_signs = self._signs_for_corner(target_corner)
+            target = self._pyramid(target_corner, layers, target_signs)
+
+            bases[player] = base
+            targets[player] = target
+
+        return bases, targets
+
+    def _corners(self) -> List[Point]:
+        return [
+            (0, 0, 0),
+            (self.a - 1, 0, 0),
+            (0, self.b - 1, 0),
+            (0, 0, self.c - 1),
+            (self.a - 1, self.b - 1, 0),
+            (self.a - 1, 0, self.c - 1),
+            (0, self.b - 1, self.c - 1),
+            (self.a - 1, self.b - 1, self.c - 1),
+        ]
+
+    def _player_corner_indices(self, players: int) -> List[int]:
+        # 3/4 人局使用两两不相邻的角（立方体的一个“正四面体”），目标区为对侧空角
+        mapping = {
+            2: [0, 7],
+            3: [0, 4, 5],
+            4: [0, 4, 5, 6],
+            6: [0, 1, 2, 3, 4, 5],
+            8: [0, 1, 2, 3, 4, 5, 6, 7],
+        }
+        return mapping[players]
+
+    @staticmethod
+    def _opposite_index(corner_index: int) -> int:
+        return 7 - corner_index
+
+    @staticmethod
+    def _signs_for_corner(corner: Point) -> Vector:
+        return tuple(1 if c == 0 else -1 for c in corner)
 
     def _pyramid(
         self,
