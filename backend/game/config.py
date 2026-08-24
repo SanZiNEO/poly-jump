@@ -64,9 +64,10 @@ class RenderConfig(BaseModel):
 
 class PolyJumpConfig(BaseModel):
     game_name: str = "PolyJump"
-    geometry: Literal["A", "B"] = "A"
+    geometry: Literal["A", "B", "C"] = "A"
     board_size: Tuple[int, int, int] = (9, 9, 9)
     b_radius: int = 6
+    c_radius: int = 6
     players: int = 2
     direction_set: Union[int, List[int]] = Field(default_factory=lambda: [6, 12, 8])
     custom_vectors: List[Tuple[int, int, int]] = Field(default_factory=list)
@@ -111,9 +112,16 @@ class PolyJumpConfig(BaseModel):
             if self.b_radius <= 0 or self.b_radius % 2 != 0:
                 raise ValueError("B 模型 b_radius 必须为正偶数")
             if self.players not in (2, 3, 4, 6):
-                raise ValueError("B 模型第一版支持 2 / 3 / 4 / 6 人")
+                raise ValueError("B 模型支持 2 / 3 / 4 / 6 人")
             # B 模型标准移动固定为 12 向
             self.direction_set = [12]
+        elif self.geometry == "C":
+            if self.c_radius <= 0 or self.c_radius % 2 != 0:
+                raise ValueError("C 模型 c_radius 必须为正偶数")
+            if self.players not in (2, 3, 4, 6):
+                raise ValueError("C 模型支持 2 / 3 / 4 / 6 人")
+            # C 模型固定为 12 + 8 = 20 向
+            self.direction_set = [20]
         return self
 
     def resolved_direction_set(self) -> List[int]:

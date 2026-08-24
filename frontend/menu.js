@@ -23,12 +23,12 @@ function updateLayers() {
   input.value = Number.isNaN(current) ? max : Math.min(Math.max(current, 1), max);
 }
 
-function updatePlayerOptions(isB) {
+function updatePlayerOptions(isL1) {
   const select = document.getElementById("players");
   const current = parseInt(select.value, 10);
-  const allowed = isB ? [2, 3, 4, 6] : [2, 3, 4, 6, 8];
+  const allowed = isL1 ? [2, 3, 4, 6] : [2, 3, 4, 6, 8];
 
-  // 如果从 A 的 8 人切到 B，自动落到 6 人
+  // 如果从 A 的 8 人切到 B/C，自动落到 6 人
   const next = allowed.includes(current) ? current : allowed[allowed.length - 1];
 
   select.innerHTML = "";
@@ -42,14 +42,20 @@ function updatePlayerOptions(isB) {
 }
 
 function updateGeometryFields() {
-  const isB = document.getElementById("geometry").value === "B";
-  document.getElementById("b-radius-field").classList.toggle("hidden", !isB);
-  document.getElementById("layers-field").classList.toggle("hidden", isB);
-  document.getElementById("layers-hint").classList.toggle("hidden", isB);
-  document.getElementById("direction-section").classList.toggle("hidden", isB);
-  updatePlayerOptions(isB);
-  if (isB) {
-    document.getElementById("direction-summary").textContent = "B 模型固定 12 向";
+  const geometry = document.getElementById("geometry").value;
+  const isL1 = geometry === "B" || geometry === "C";
+
+  document.getElementById("b-radius-field").classList.toggle("hidden", !isL1);
+  document.getElementById("layers-field").classList.toggle("hidden", isL1);
+  document.getElementById("layers-hint").classList.toggle("hidden", isL1);
+  document.getElementById("direction-section").classList.toggle("hidden", isL1);
+  updatePlayerOptions(isL1);
+
+  const summary = document.getElementById("direction-summary");
+  if (geometry === "B") {
+    summary.textContent = "B 模型固定 12 向";
+  } else if (geometry === "C") {
+    summary.textContent = "C 模型固定 20 向";
   } else {
     updateDirectionSummary();
   }
@@ -136,11 +142,12 @@ function readConfig() {
 
   const players = parseInt(document.getElementById("players").value, 10);
   const bRadius = parseInt(document.getElementById("b-radius").value, 10);
-  if (geometry === "B" && (bRadius <= 0 || bRadius % 2 !== 0)) {
-    throw new Error("B 模型半径必须为正偶数");
+  const isL1 = geometry === "B" || geometry === "C";
+  if (isL1 && (bRadius <= 0 || bRadius % 2 !== 0)) {
+    throw new Error("L1 球半径必须为正偶数");
   }
-  if (geometry === "B" && players === 8) {
-    throw new Error("B 模型第一版支持 2 / 3 / 4 / 6 人");
+  if (isL1 && players === 8) {
+    throw new Error("B/C 模型支持 2 / 3 / 4 / 6 人");
   }
 
   const layers = parseInt(document.getElementById("layers").value, 10);
@@ -154,9 +161,10 @@ function readConfig() {
     geometry,
     board_size: boardSize(),
     b_radius: bRadius,
+    c_radius: bRadius,
     players,
-    direction_set: geometry === "B" ? [12] : dirs,
-    custom_vectors: geometry === "B" ? [] : customs,
+    direction_set: geometry === "B" ? [12] : geometry === "C" ? [20] : dirs,
+    custom_vectors: isL1 ? [] : customs,
     movement: {
       allow_step: document.getElementById("allow-step").checked,
       allow_jump: document.getElementById("allow-jump").checked,

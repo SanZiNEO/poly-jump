@@ -28,3 +28,14 @@ def test_load_b_config_and_create_game():
     state = GameState(cfg)
     assert len(state.board.points) == 231
     assert len(state.board.pieces) == 84
+
+
+def test_load_c_config_and_create_game():
+    cfg = load_config(ROOT / "configs" / "c_6p_radius6.json")
+    assert cfg.geometry == "C"
+    assert cfg.c_radius == 6
+    assert cfg.players == 6
+
+    state = GameState(cfg)
+    assert len(state.board.points) == 377
+    assert len(state.board.pieces) == 6 * 19
