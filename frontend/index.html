@@ -17,24 +17,28 @@
 <body>
   <section id="menu-page" class="page">
     <header class="menu-header">
-      <h1>PolyJump</h1>
-      <p class="subtitle">可配置三维跳棋框架 · A / B 几何 · 规则自由组合</p>
+      <h1 data-i18n="app_title">PolyJump</h1>
+      <p class="subtitle" data-i18n="app_subtitle">可配置三维跳棋框架 · A / B / C / D 几何 · 规则自由组合</p>
+      <select id="lang-select">
+        <option value="zh">中文</option>
+        <option value="en">English</option>
+      </select>
     </header>
 
     <div class="menu-card">
       <div class="menu-section">
-        <h2>棋盘</h2>
+        <h2 data-i18n="board_section">棋盘</h2>
 
         <label class="field">
-          <span>几何模型</span>
+          <span data-i18n="geometry_label">几何模型</span>
           <select id="geometry">
-            <option value="A" selected>A 模型 · 正交网格</option>
-            <option value="B">B 模型 · FCC 偶子晶格</option>
-            <option value="C">C 模型 · L1 全整数 20 向</option>
-            <option value="A_EXT">A-ext · 外接金字塔方向可配</option>
-            <option value="D">D 模型 · 外接金字塔 14 向</option>
-            <option value="B_EXT">B-ext · 外接金字塔 12 向</option>
-            <option value="C_EXT">C-ext · 外接金字塔 20 向</option>
+            <option value="A" selected data-i18n="model_a">A 模型 · 正交网格</option>
+            <option value="B" data-i18n="model_b">B 模型 · FCC 偶子晶格</option>
+            <option value="C" data-i18n="model_c">C 模型 · L1 全整数 20 向</option>
+            <option value="A_EXT" data-i18n="model_a_ext">A-ext · 外接金字塔方向可配</option>
+            <option value="D" data-i18n="model_d">D 模型 · 外接金字塔 14 向</option>
+            <option value="B_EXT" data-i18n="model_b_ext">B-ext · 外接金字塔 12 向</option>
+            <option value="C_EXT" data-i18n="model_c_ext">C-ext · 外接金字塔 20 向</option>
           </select>
         </label>
 
@@ -54,16 +58,16 @@
         </div>
 
         <label class="field hidden" id="b-radius-field">
-          <span>L1 球半径（偶数）</span>
+          <span data-i18n="l1_radius">L1 球半径（偶数）</span>
           <input id="b-radius" type="number" value="6" min="2" max="10" step="2">
         </label>
         <label class="field hidden" id="ep-side-field">
-          <span>外接金字塔中心边长（奇数）</span>
+          <span data-i18n="ep_side">外接金字塔中心边长（奇数）</span>
           <input id="ep-side" type="number" value="5" min="3" max="9" step="2">
         </label>
 
         <label class="field">
-          <span>玩家数</span>
+          <span data-i18n="players_label">玩家数</span>
           <select id="players">
             <option value="2" selected>2</option>
             <option value="3">3</option>
@@ -74,15 +78,15 @@
         </label>
 
         <label class="field" id="layers-field">
-          <span>棋子层数（推荐最大值）</span>
+          <span data-i18n="layers_label">棋子层数（推荐最大值）</span>
           <input id="layers" type="number" value="4" min="1" max="4" step="1">
         </label>
-        <p class="hint" id="layers-hint">不能超过最大值，可由玩家自行降低</p>
+        <p class="hint" id="layers-hint" data-i18n="layers_hint">不能超过最大值，可由玩家自行降低</p>
       </div>
 
       <div class="menu-section" id="direction-section">
-        <h2>移动方向</h2>
-        <p class="hint">方向规则由后端配置提供，前端自动扫描。</p>
+        <h2 data-i18n="direction_section">移动方向</h2>
+        <p class="hint" data-i18n="direction_hint">方向规则由后端配置提供，前端自动扫描。</p>
 
         <div id="direction-checks" class="switch-list"></div>
 
@@ -90,45 +94,45 @@
       </div>
 
       <div class="menu-section">
-        <h2>规则</h2>
+        <h2 data-i18n="rules_section">规则</h2>
 
         <div class="switch-list">
           <label class="switch-row">
             <input type="checkbox" id="allow-step" checked>
-            <span>允许普通移动</span>
+            <span data-i18n="allow_step">允许普通移动</span>
           </label>
           <label class="switch-row">
             <input type="checkbox" id="allow-jump" checked>
-            <span>允许跳跃</span>
+            <span data-i18n="allow_jump">允许跳跃</span>
           </label>
           <label class="switch-row">
             <input type="checkbox" id="allow-chain" checked>
-            <span>允许连跳</span>
+            <span data-i18n="allow_chain">允许连跳</span>
           </label>
           <label class="switch-row">
             <input type="checkbox" id="allow-two-step">
-            <span>允许两格跳（空一格跳）</span>
+            <span data-i18n="allow_two_step">允许两格跳（空一格跳）</span>
           </label>
         </div>
 
         <label class="field">
-          <span>连跳模式</span>
+          <span data-i18n="hop_mode_label">连跳模式</span>
           <select id="hop-mode">
-            <option value="FREE_STOP" selected>自由停</option>
-            <option value="FORCE_ALL">必须跳到底</option>
+            <option value="FREE_STOP" selected data-i18n="free_stop">自由停</option>
+            <option value="FORCE_ALL" data-i18n="force_all">必须跳到底</option>
           </select>
         </label>
 
         <label class="field">
-          <span>对局规则</span>
+          <span data-i18n="game_mode_label">对局规则</span>
           <select id="capture-mode">
-            <option value="NONE" selected>中国跳棋（搬运填目标区）</option>
-            <option value="CAPTURE">西洋跳棋（吃光对方）</option>
-            <option value="MIXED">混合模式（搬运为主，吃子送回原位）</option>
+            <option value="NONE" selected data-i18n="mode_chinese">中国跳棋（搬运填目标区）</option>
+            <option value="CAPTURE" data-i18n="mode_capture">西洋跳棋（吃光对方）</option>
+            <option value="MIXED" data-i18n="mode_mixed">混合模式（搬运为主，吃子送回原位）</option>
           </select>
         </label>
 
-        <button id="start-btn" class="primary-btn">开始游戏</button>
+        <button id="start-btn" class="primary-btn" data-i18n="start_game">开始游戏</button>
         <p id="menu-error" class="error"></p>
       </div>
     </div>
@@ -139,17 +143,17 @@
       <span id="status-text">加载中...</span>
       <div id="player-roster"></div>
       <div id="score-board"></div>
-      <button id="back-btn">返回主菜单</button>
+      <button id="back-btn" data-i18n="back_menu">返回主菜单</button>
     </div>
     <div id="history-panel">
-      <h3>对局记录</h3>
+      <h3 data-i18n="history_title">对局记录</h3>
       <div id="history-moves"></div>
       <div id="replay-controls">
-        <button id="replay-start" title="回到开局">⏮</button>
-        <button id="replay-prev" title="上一步">◀</button>
-        <button id="replay-next" title="下一步">▶</button>
-        <button id="replay-end" title="最后一手">⏭</button>
-        <button id="replay-auto">自动播放</button>
+        <button id="replay-start" title="回到开局" data-i18n="replay_start">⏮</button>
+        <button id="replay-prev" title="上一步" data-i18n="replay_prev">◀</button>
+        <button id="replay-next" title="下一步" data-i18n="replay_next">▶</button>
+        <button id="replay-end" title="最后一手" data-i18n="replay_end">⏭</button>
+        <button id="replay-auto" data-i18n="replay_auto">自动播放</button>
       </div>
     </div>
     <div id="scene-container"></div>

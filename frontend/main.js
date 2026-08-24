@@ -1,6 +1,7 @@
 // 游戏页面：Three.js 3D 棋盘渲染 + 交互
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { translations, getCurrentLang } from "./i18n.js";
 
 const state = {
   gameId: null,
@@ -343,7 +344,7 @@ function stopAutoReplay() {
     state.replayTimer = null;
   }
   const btn = document.getElementById("replay-auto");
-  if (btn) btn.textContent = "自动播放";
+  if (btn) btn.textContent = translations[getCurrentLang()].replay_auto;
 }
 
 function startAutoReplay() {
@@ -360,7 +361,7 @@ function startAutoReplay() {
     setReplayStep(step);
   }, 800);
   const btn = document.getElementById("replay-auto");
-  if (btn) btn.textContent = "停止";
+  if (btn) btn.textContent = translations[getCurrentLang()].replay_stop;
 }
 
 async function loadHistory(gameId) {

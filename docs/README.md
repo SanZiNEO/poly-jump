@@ -17,6 +17,7 @@
 | [09-optional-ai.md](./09-optional-ai.md) | 可选小 AI 实现（随机 / 贪心 / MCTS） |
 | [10-implementation-guide.md](./10-implementation-guide.md) | 分步实现指南 |
 | [11-references.md](./11-references.md) | 参考项目与资料链接 |
+| [CURRENT.md](./CURRENT.md) | 当前实现状态：模型/玩法/接口/配置 |
 
 ## 核心概念
 

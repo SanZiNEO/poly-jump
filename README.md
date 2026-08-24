@@ -1,6 +1,8 @@
 # PolyJump
 
-A configurable 3D jump-chess framework with A/B geometries and multi-player rule switches.
+A configurable 3D jump-chess framework with multiple geometries, rule modes, scoring, replay, and clean programming interfaces.
+
+> English version: [README.en.md](./README.en.md)
 
 ## 项目简介
 
@@ -38,6 +40,7 @@ PolyJump 是一个可配置的三维跳棋框架。
 | 可选小 AI | [docs/09-optional-ai.md](./docs/09-optional-ai.md) |
 | 实现指南 | [docs/10-implementation-guide.md](./docs/10-implementation-guide.md) |
 | 参考项目 | [docs/11-references.md](./docs/11-references.md) |
+| 当前实现状态 | [docs/CURRENT.md](./docs/CURRENT.md) |
 
 ## 后端可编程接口
 

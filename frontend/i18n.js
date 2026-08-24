@@ -1,0 +1,103 @@
+// PolyJump 前端语言配置
+export const translations = {
+  zh: {
+    app_title: "PolyJump",
+    app_subtitle: "可配置三维跳棋框架 · A / B / C / D 几何 · 规则自由组合",
+    board_section: "棋盘",
+    geometry_label: "几何模型",
+    model_a: "A 模型 · 正交网格",
+    model_b: "B 模型 · FCC 偶子晶格",
+    model_c: "C 模型 · L1 全整数 20 向",
+    model_a_ext: "A-ext · 外接金字塔方向可配",
+    model_d: "D 模型 · 外接金字塔 14 向",
+    model_b_ext: "B-ext · 外接金字塔 12 向",
+    model_c_ext: "C-ext · 外接金字塔 20 向",
+    l1_radius: "L1 球半径（偶数）",
+    ep_side: "外接金字塔中心边长（奇数）",
+    players_label: "玩家数",
+    layers_label: "棋子层数（推荐最大值）",
+    layers_hint: "不能超过最大值，可由玩家自行降低",
+    direction_section: "移动方向",
+    direction_hint: "方向规则由后端配置提供，前端自动扫描。",
+    rules_section: "规则",
+    allow_step: "允许普通移动",
+    allow_jump: "允许跳跃",
+    allow_chain: "允许连跳",
+    allow_two_step: "允许两格跳（空一格跳）",
+    hop_mode_label: "连跳模式",
+    free_stop: "自由停",
+    force_all: "必须跳到底",
+    game_mode_label: "对局规则",
+    mode_chinese: "中国跳棋（搬运填目标区）",
+    mode_capture: "西洋跳棋（吃光对方）",
+    mode_mixed: "混合模式（搬运为主，吃子送回原位）",
+    start_game: "开始游戏",
+    back_menu: "返回主菜单",
+    history_title: "对局记录",
+    replay_start: "回到开局",
+    replay_prev: "上一步",
+    replay_next: "下一步",
+    replay_end: "最后一手",
+    replay_auto: "自动播放",
+    replay_stop: "停止",
+  },
+  en: {
+    app_title: "PolyJump",
+    app_subtitle: "Configurable 3D jump chess · A / B / C / D geometries · Flexible rules",
+    board_section: "Board",
+    geometry_label: "Geometry",
+    model_a: "A model · Orthogonal grid",
+    model_b: "B model · FCC even lattice",
+    model_c: "C model · L1 full 20-dir",
+    model_a_ext: "A-ext · External pyramid, configurable",
+    model_d: "D model · External pyramid 14-dir",
+    model_b_ext: "B-ext · External pyramid 12-dir",
+    model_c_ext: "C-ext · External pyramid 20-dir",
+    l1_radius: "L1 ball radius (even)",
+    ep_side: "External pyramid center side (odd)",
+    players_label: "Players",
+    layers_label: "Piece layers (recommended max)",
+    layers_hint: "Cannot exceed max; you may choose fewer",
+    direction_section: "Movement Directions",
+    direction_hint: "Direction rules are provided by backend config.",
+    rules_section: "Rules",
+    allow_step: "Allow step",
+    allow_jump: "Allow jump",
+    allow_chain: "Allow chain jump",
+    allow_two_step: "Allow two-step hop",
+    hop_mode_label: "Hop mode",
+    free_stop: "Free stop",
+    force_all: "Force all",
+    game_mode_label: "Game mode",
+    mode_chinese: "Chinese checkers (fill target)",
+    mode_capture: "Draughts (capture all)",
+    mode_mixed: "Mixed (transport + return captures)",
+    start_game: "Start Game",
+    back_menu: "Back to Menu",
+    history_title: "Game Record",
+    replay_start: "Start",
+    replay_prev: "Prev",
+    replay_next: "Next",
+    replay_end: "End",
+    replay_auto: "Auto Play",
+    replay_stop: "Stop",
+  },
+};
+
+export function getCurrentLang() {
+  return localStorage.getItem("polyjump-lang") || "zh";
+}
+
+export function applyLanguage(lang) {
+  if (!translations[lang]) lang = "zh";
+  localStorage.setItem("polyjump-lang", lang);
+  document.documentElement.lang = lang === "en" ? "en" : "zh";
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    const key = el.dataset.i18n;
+    if (translations[lang] && translations[lang][key]) {
+      el.textContent = translations[lang][key];
+    }
+  });
+  const selector = document.getElementById("lang-select");
+  if (selector) selector.value = lang;
+}

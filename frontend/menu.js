@@ -1,4 +1,6 @@
 // 主菜单：收集表单配置 -> POST /api/game/new -> 进入游戏页
+import { applyLanguage, getCurrentLang } from "./i18n.js";
+
 window.__polyJump = { gameId: null, state: null };
 
 function boardSize() {
@@ -268,6 +270,11 @@ document.getElementById("geometry").addEventListener("change", () => {
   }
 });
 
+document.getElementById("lang-select").addEventListener("change", (e) => {
+  applyLanguage(e.target.value);
+});
+
+applyLanguage(getCurrentLang());
 updateGeometryFields();
 updateLayers();
 loadDirectionSets();
