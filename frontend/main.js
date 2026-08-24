@@ -582,7 +582,8 @@ function playMoveAnimation(path, player) {
     });
     group.add(new THREE.Line(lineGeo, lineMat));
 
-    const duration = Math.max(0.1, state.animationSpeed) * 1000;
+    // 每跳固定速度，长路径按跳数增加总时长
+    const duration = Math.max(0.05, state.animationSpeed) * (path.length - 1) * 1000;
     const start = performance.now();
 
     function tick(now) {
