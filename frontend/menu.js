@@ -35,15 +35,21 @@ function selectedDirections() {
 function selectedCustomVectors() {
   return Array.from(
     document.querySelectorAll('input[data-type="custom"]:checked')
-  ).map((el) => el.dataset.vector.split(",").map(Number));
+  ).flatMap((el) => JSON.parse(el.dataset.vectors));
+}
+
+function selectedCustomNames() {
+  return Array.from(
+    document.querySelectorAll('input[data-type="custom"]:checked')
+  ).map((el) => el.dataset.label);
 }
 
 function updateDirectionSummary() {
   const dirs = selectedDirections();
-  const customs = selectedCustomVectors();
+  const customs = selectedCustomNames();
   const parts = [];
   if (dirs.length) parts.push(dirs.join(" + "));
-  customs.forEach((v) => parts.push(`自定义 ${v.join(":")}`));
+  customs.forEach((name) => parts.push(name));
   const text = parts.length
     ? `当前：${parts.join(" + ")}`
     : "请至少选择一种移动方向";
@@ -65,6 +71,7 @@ async function loadDirectionSets() {
 
       const cb = document.createElement("input");
       cb.type = "checkbox";
+      cb.dataset.label = set.name;
       if (set.type === "base") {
         cb.dataset.type = "base";
         cb.dataset.dir = set.id;
@@ -72,7 +79,7 @@ async function loadDirectionSets() {
         cb.checked = set.id === "6" || set.id === "12";
       } else {
         cb.dataset.type = "custom";
-        cb.dataset.vector = set.vector.join(",");
+        cb.dataset.vectors = JSON.stringify(set.vectors);
       }
 
       const span = document.createElement("span");
