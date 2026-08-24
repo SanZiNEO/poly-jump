@@ -45,6 +45,14 @@ PolyJump is a game, not an AI training framework. It provides:
 | Win bonus | +10 |
 | Surviving pieces in capture mode | +1 each |
 
+## One-Click Start
+
+```bash
+python run.py
+```
+
+Starts the backend and opens the browser automatically.
+
 ## Interfaces
 
 ### HTTP API

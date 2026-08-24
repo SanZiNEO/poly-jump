@@ -38,6 +38,14 @@ PolyJump 是一个可配置的三维跳棋框架。
 | AI / 研究 | [docs/07-ai-and-research.md](./docs/07-ai-and-research.md) |
 | 参考资料 | [docs/08-references.md](./docs/08-references.md) |
 
+## 一键启动
+
+```powershell
+python run.py
+```
+
+脚本会自动启动后端并打开浏览器。
+
 ## 后端可编程接口
 
 游戏规则引擎可以脱离前端单独运行，通过 JSON 配置启动：
