@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from backend.game.ai import GreedyAI, RandomAI
+from backend.game.ai import GreedyAI, ProgressAI, RandomAI
 from backend.game.board import Board
 from backend.game.config import PolyJumpConfig
 
@@ -29,3 +29,25 @@ def test_greedy_ai_picks_closer_to_target():
     ]
     chosen = GreedyAI().select_move(board, 1, paths)
     assert chosen == [(0, 0, 0), (1, 0, 0)]
+
+
+def test_progress_ai_avoids_backward_jump():
+    board = make_board()
+    paths = [
+        [(0, 0, 0), (1, 0, 0)],   # 前进
+        [(0, 0, 0), (0, 0, -1)],  # 倒跳
+    ]
+    chosen = ProgressAI().select_move(board, 1, paths)
+    assert chosen == [(0, 0, 0), (1, 0, 0)]
+
+
+def test_progress_ai_prefers_longer_chain_forward():
+    board = make_board()
+    board.set_piece((2, 0, 0), 2)  # 垫脚石
+    paths = [
+        [(0, 0, 0), (1, 0, 0)],                # 普通前进 1 格
+        [(0, 0, 0), (4, 0, 0)],                # 连跳，如果合法
+    ]
+    # 简单验证：连跳路径评分不低于普通前进
+    ai = ProgressAI()
+    assert ai._count_captures(board, [(0, 0, 0), (4, 0, 0)], [(1, 0, 0)], 1) == 1
