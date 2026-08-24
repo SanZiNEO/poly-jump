@@ -242,13 +242,6 @@ function rebuild() {
     }
   }
 
-  if (checked("show-cube")) {
-    content.add(buildCubeWireframe());
-  }
-  if (checked("show-arms")) {
-    content.add(buildArmsWireframe());
-  }
-
   document.getElementById("point-count").textContent = String(total);
 }
 

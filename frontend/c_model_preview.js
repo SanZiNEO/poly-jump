@@ -183,10 +183,7 @@ function rebuild() {
   const showLines = checked("show-lines");
   let total = 0;
   const candidates = [
-    ["cube", "show-cube"],
     ["l1", "show-l1"],
-    ["core", "show-core"],
-    ["pyramids", "show-pyramids"],
   ];
 
   candidates.forEach(([id, checkId]) => {
