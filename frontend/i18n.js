@@ -1,7 +1,7 @@
 // PolyJump 前端语言配置
 export const translations = {
   zh: {
-    app_title: "PolyJump",
+    app_title: "三维跳棋",
     app_subtitle: "可配置三维跳棋框架 · A / B / C / D 几何 · 规则自由组合",
     board_section: "棋盘",
     geometry_label: "几何模型",
@@ -55,7 +55,7 @@ export const translations = {
     replay_stop: "停止",
   },
   en: {
-    app_title: "PolyJump",
+    app_title: "3D Jump Chess",
     app_subtitle: "Configurable 3D jump chess · A / B / C / D geometries · Flexible rules",
     board_section: "Board",
     geometry_label: "Geometry",
