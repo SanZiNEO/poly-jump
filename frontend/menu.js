@@ -23,12 +23,31 @@ function updateLayers() {
   input.value = Number.isNaN(current) ? max : Math.min(Math.max(current, 1), max);
 }
 
+function updatePlayerOptions(isB) {
+  const select = document.getElementById("players");
+  const current = parseInt(select.value, 10);
+  const allowed = isB ? [2, 3, 4, 6] : [2, 3, 4, 6, 8];
+
+  // 如果从 A 的 8 人切到 B，自动落到 6 人
+  const next = allowed.includes(current) ? current : allowed[allowed.length - 1];
+
+  select.innerHTML = "";
+  allowed.forEach((v) => {
+    const option = document.createElement("option");
+    option.value = String(v);
+    option.textContent = String(v);
+    if (v === next) option.selected = true;
+    select.appendChild(option);
+  });
+}
+
 function updateGeometryFields() {
   const isB = document.getElementById("geometry").value === "B";
   document.getElementById("b-radius-field").classList.toggle("hidden", !isB);
   document.getElementById("layers-field").classList.toggle("hidden", isB);
   document.getElementById("layers-hint").classList.toggle("hidden", isB);
   document.getElementById("direction-section").classList.toggle("hidden", isB);
+  updatePlayerOptions(isB);
   if (isB) {
     document.getElementById("direction-summary").textContent = "B 模型固定 12 向";
   } else {
