@@ -5,7 +5,11 @@ PolyJump 本身是游戏，不包含 AI 训练逻辑。
 
 ## 当前 AI
 
-- GraphProgressAI（默认）
+- ScoringAwareAI（默认）
+  - 读取当前对局 ScoringConfig
+  - 吃子分、进入目标区分、连跳计分上限都按配置计算
+  - 带图距离进步与回跳惩罚
+- GraphProgressAI
   - 用真实图距离（BFS）评估抽象几何下的前进收益
   - 连跳奖励
   - 吃子奖励

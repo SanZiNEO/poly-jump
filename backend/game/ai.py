@@ -206,3 +206,59 @@ class GraphProgressAI(ProgressAI):
                     q.append(n)
 
         return dist
+
+
+class ScoringAwareAI(GraphProgressAI):
+    """读取当前对局 ScoringConfig 的 AI。
+
+    评分：
+    = 图距离进步
+    + 吃子分（按配置）
+    + 进入目标区分（按配置）
+    + 连跳计分（受 chain_max_scoring 限制）
+    """
+
+    def select_move(
+        self,
+        board: Board,
+        player: int,
+        legal_paths: List[Sequence[Sequence[int]]],
+    ) -> Optional[list]:
+        if not legal_paths:
+            return None
+
+        scoring = board.config.scoring
+        target = board.player_targets.get(player, set())
+
+        directions = resolve_direction_set(
+            board.config.direction_set, board.config.custom_vectors
+        )
+        dist = self._distance_map(board, target, directions) if target else {}
+
+        def score(path: Sequence[Sequence[int]]) -> float:
+            start = path[0]
+            end = path[-1]
+            before = dist.get(tuple(start))
+            after = dist.get(tuple(end))
+            progress = 0.0
+            if before is not None and after is not None:
+                progress = float(before - after)
+
+            chain_jumps = max(0, len(path) - 1) if len(path) > 2 else 0
+            if scoring.chain_max_scoring > 0:
+                chain_jumps = min(chain_jumps, scoring.chain_max_scoring)
+            chain_score = chain_jumps * scoring.chain_jump_points
+
+            captures = self._count_captures(board, path, directions, player)
+            capture_score = captures * scoring.capture_points
+
+            target_score = 0
+            if target and tuple(end) in target:
+                target_score = scoring.target_zone_points
+
+            if progress < 0:
+                return progress + chain_score + capture_score + target_score - abs(progress) * self.backward_penalty
+
+            return progress + chain_score + capture_score + target_score
+
+        return max(legal_paths, key=score)

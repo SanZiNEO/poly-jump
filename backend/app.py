@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .game.ai import GraphProgressAI, GreedyAI, ProgressAI, RandomAI
+from .game.ai import GraphProgressAI, GreedyAI, ProgressAI, RandomAI, ScoringAwareAI
 from .game.config import PolyJumpConfig
 from .game.direction_registry import get_available_sets
 from .game.game_state import GameState
@@ -105,10 +105,12 @@ def move(game_id: str, req: MoveRequest):
 
 
 @app.post("/api/game/{game_id}/ai-move")
-def ai_move(game_id: str, ai_type: str = "graph_progress"):
+def ai_move(game_id: str, ai_type: str = "scoring_aware"):
     state = _get_state(game_id)
     paths = state.legal_moves()
-    if ai_type == "graph_progress":
+    if ai_type == "scoring_aware":
+        selected = ScoringAwareAI().select_move(state.board, state.current_player, paths)
+    elif ai_type == "graph_progress":
         selected = GraphProgressAI().select_move(state.board, state.current_player, paths)
     elif ai_type == "progress":
         selected = ProgressAI().select_move(state.board, state.current_player, paths)

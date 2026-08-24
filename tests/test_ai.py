@@ -2,7 +2,14 @@
 
 from __future__ import annotations
 
-from backend.game.ai import GraphProgressAI, GreedyAI, ProgressAI, RandomAI
+from backend.game.ai import (
+    GraphProgressAI,
+    GreedyAI,
+    ProgressAI,
+    RandomAI,
+    ScoringAwareAI,
+)
+from backend.game.config import ScoringConfig
 from backend.game.board import Board
 from backend.game.config import PolyJumpConfig
 
@@ -61,3 +68,22 @@ def test_graph_progress_ai_picks_forward():
     ]
     chosen = GraphProgressAI().select_move(board, 1, paths)
     assert chosen == [(0, 0, 0), (1, 0, 0)]
+
+
+def test_scoring_aware_ai_prefers_target_zone():
+    cfg = PolyJumpConfig(
+        board_size=(9, 9, 9),
+        players=2,
+        direction_set=[6],
+        scoring=ScoringConfig(enabled=True, target_zone_points=20),
+    )
+    board = Board(cfg, setup=False)
+    board.player_targets = {1: {(5, 0, 0)}}
+    board.set_piece((0, 0, 0), 1)
+
+    paths = [
+        [(0, 0, 0), (1, 0, 0)],
+        [(0, 0, 0), (5, 0, 0)],
+    ]
+    chosen = ScoringAwareAI().select_move(board, 1, paths)
+    assert chosen == [(0, 0, 0), (5, 0, 0)]

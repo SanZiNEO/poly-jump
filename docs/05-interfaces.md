@@ -22,7 +22,8 @@ python -m uvicorn backend.app:app --reload
 `ai-move` 支持：
 
 ```text
-ai_type=graph_progress  # 默认，图距离贪心
+ai_type=scoring_aware   # 默认，读取积分配置
+ai_type=graph_progress  # 图距离贪心
 ai_type=progress        # 连跳奖励贪心
 ai_type=greedy          # 简单贪心
 ai_type=random          # 随机
