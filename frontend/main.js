@@ -29,7 +29,7 @@ const state = {
   aiPlayers: new Set(),
   aiMoveTimer: null,
   animationEnabled: true,
-  animationSpeed: 0.25,
+  animationSpeed: 0.125,
   animationGroup: null,
 };
 
