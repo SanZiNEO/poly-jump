@@ -493,16 +493,20 @@ async function submitMove(path) {
     console.error(data.error || data.detail);
     return;
   }
-  state.board = data.state;
   state.selected = null;
   state.legalPaths = [];
   state.replayMode = false;
   state.replayStep = null;
   stopAutoReplay();
+
+  // 先让当前棋子本身沿路径移动动画
+  const lastMove = data.state.history[data.state.history.length - 1];
+  await playMoveAnimation(path, lastMove ? lastMove.player : data.state.current_player);
+
+  // 动画结束后再切到最终局面
+  state.board = data.state;
   renderBoard(state.board);
   updateHud(state.board);
-  const lastMove = data.state.history[data.state.history.length - 1];
-  await playMoveAnimation(path, lastMove ? lastMove.player : state.board.current_player);
   await loadHistory(state.gameId);
   renderAiPlayerControls();
   maybeAutoMove();
@@ -519,16 +523,18 @@ async function handleAiMove() {
     return;
   }
 
-  state.board = data.state;
   state.selected = null;
   state.legalPaths = [];
   state.replayMode = false;
   state.replayStep = null;
   stopAutoReplay();
+
+  const lastMove = data.state.history[data.state.history.length - 1];
+  await playMoveAnimation(data.move || [], lastMove ? lastMove.player : data.state.current_player);
+
+  state.board = data.state;
   renderBoard(state.board);
   updateHud(state.board);
-  const lastMove = data.state.history[data.state.history.length - 1];
-  await playMoveAnimation(data.move || [], lastMove ? lastMove.player : state.board.current_player);
   await loadHistory(state.gameId);
   maybeAutoMove();
 }
@@ -553,11 +559,20 @@ function playMoveAnimation(path, player) {
     }
     clearMoveAnimation();
 
+    // 找到当前棋盘上位于起点的棋子 mesh
+    const startKey = keyOf(path[0]);
+    const mesh = state.pieceGroup.children.find(
+      (m) => m.userData.kind === "piece" && keyOf(m.userData.pos) === startKey
+    );
+    if (!mesh) {
+      resolve();
+      return;
+    }
+
+    // 高亮路径线
     const group = new THREE.Group();
     state.animationGroup = group;
     state.scene.add(group);
-
-    // 高亮路径线
     const linePts = path.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
     const lineMat = new THREE.LineBasicMaterial({
@@ -566,14 +581,6 @@ function playMoveAnimation(path, player) {
       opacity: 0.9,
     });
     group.add(new THREE.Line(lineGeo, lineMat));
-
-    // 移动棋子标记
-    const color = PLAYER_COLORS[player] || 0xffffff;
-    const marker = new THREE.Mesh(
-      new THREE.SphereGeometry(0.38, 12, 12),
-      new THREE.MeshBasicMaterial({ color })
-    );
-    group.add(marker);
 
     const duration = Math.max(0.1, state.animationSpeed) * 1000;
     const start = performance.now();
@@ -585,7 +592,7 @@ function playMoveAnimation(path, player) {
       const frac = scaled - i;
       const a = path[i];
       const b = path[i + 1];
-      marker.position.set(
+      mesh.position.set(
         a[0] + (b[0] - a[0]) * frac,
         a[1] + (b[1] - a[1]) * frac,
         a[2] + (b[2] - a[2]) * frac
