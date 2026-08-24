@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from .game.ai import RandomAI
+from .game.ai import GreedyAI, RandomAI
 from .game.config import PolyJumpConfig
 from .game.direction_registry import get_available_sets
 from .game.game_state import GameState
@@ -105,10 +105,13 @@ def move(game_id: str, req: MoveRequest):
 
 
 @app.post("/api/game/{game_id}/ai-move")
-def ai_move(game_id: str):
+def ai_move(game_id: str, ai_type: str = "greedy"):
     state = _get_state(game_id)
     paths = state.legal_moves()
-    selected = RandomAI().select_move(paths)
+    if ai_type == "greedy":
+        selected = GreedyAI().select_move(state.board, state.current_player, paths)
+    else:
+        selected = RandomAI().select_move(paths)
     if selected is None:
         return JSONResponse(
             status_code=400,

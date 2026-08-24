@@ -1,0 +1,11 @@
+.git
+.poly_jump
+example
+docs
+tests
+__pycache__
+*.pyc
+*.log
+progress.md
+task_plan.md
+findings.md

@@ -380,6 +380,7 @@ function attachReplayControls() {
     if (state.replayTimer) stopAutoReplay();
     else startAutoReplay();
   });
+  document.getElementById("ai-move-btn").addEventListener("click", handleAiMove);
 }
 
 function clearHighlights() {
@@ -447,6 +448,28 @@ async function submitMove(path) {
     console.error(data.error || data.detail);
     return;
   }
+  state.board = data.state;
+  state.selected = null;
+  state.legalPaths = [];
+  state.replayMode = false;
+  state.replayStep = null;
+  stopAutoReplay();
+  renderBoard(state.board);
+  updateHud(state.board);
+  await loadHistory(state.gameId);
+}
+
+async function handleAiMove() {
+  if (state.replayMode) return;
+  const res = await fetch(`/api/game/${state.gameId}/ai-move`, {
+    method: "POST",
+  });
+  const data = await res.json();
+  if (!res.ok || !data.ok) {
+    console.error(data.error || data.detail);
+    return;
+  }
+
   state.board = data.state;
   state.selected = null;
   state.legalPaths = [];

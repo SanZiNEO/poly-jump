@@ -48,6 +48,20 @@ python -m backend.game.headless --config configs/a_2p_6dir.json --moves 10
 
 示例配置位于 [`configs/`](./configs/)。
 
+## Hugging Face 部署
+
+仓库已包含 Dockerfile，可直接部署为 HF Space：
+
+1. 创建 Hugging Face Space，SDK 选择 **Docker**
+2. 将本仓库推送到 Space
+3. Space 默认启动：
+
+```text
+http://0.0.0.0:8000
+```
+
+Space 内只包含游戏本体，不包含 AI 训练内容。
+
 ## License
 
 See [LICENSE](./LICENSE).

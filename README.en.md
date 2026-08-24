@@ -82,6 +82,16 @@ python -m backend.game.headless --config configs\a_2p_6dir.json --moves 10
 - Current docs index: [docs/README.md](./docs/README.md)
 - Chinese README: [README.md](./README.md)
 
+## Hugging Face Deployment
+
+The repository includes a Dockerfile. To deploy as an HF Space:
+
+1. Create a Space with SDK **Docker**
+2. Push this repository to the Space
+3. The app starts at `http://0.0.0.0:8000`
+
+The Space includes only the game, no AI training content.
+
 ## License
 
 See [LICENSE](./LICENSE).
