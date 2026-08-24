@@ -28,6 +28,9 @@ const state = {
   replayControlsAttached: false,
   aiPlayers: new Set(),
   aiMoveTimer: null,
+  animationEnabled: true,
+  animationSpeed: 0.5,
+  animationGroup: null,
 };
 
 const PLAYER_COLORS = {
@@ -417,6 +420,12 @@ function attachReplayControls() {
     else startAutoReplay();
   });
   document.getElementById("ai-move-btn").addEventListener("click", handleAiMove);
+  document.getElementById("anim-enabled").addEventListener("change", (e) => {
+    state.animationEnabled = e.target.checked;
+  });
+  document.getElementById("anim-speed").addEventListener("change", (e) => {
+    state.animationSpeed = parseFloat(e.target.value);
+  });
 }
 
 function clearHighlights() {
@@ -492,6 +501,8 @@ async function submitMove(path) {
   stopAutoReplay();
   renderBoard(state.board);
   updateHud(state.board);
+  const lastMove = data.state.history[data.state.history.length - 1];
+  await playMoveAnimation(path, lastMove ? lastMove.player : state.board.current_player);
   await loadHistory(state.gameId);
   renderAiPlayerControls();
   maybeAutoMove();
@@ -516,8 +527,79 @@ async function handleAiMove() {
   stopAutoReplay();
   renderBoard(state.board);
   updateHud(state.board);
+  const lastMove = data.state.history[data.state.history.length - 1];
+  await playMoveAnimation(data.move || [], lastMove ? lastMove.player : state.board.current_player);
   await loadHistory(state.gameId);
   maybeAutoMove();
+}
+
+function clearMoveAnimation() {
+  if (state.animationGroup) {
+    state.scene.remove(state.animationGroup);
+    while (state.animationGroup.children.length) {
+      const child = state.animationGroup.children.pop();
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) child.material.dispose();
+    }
+    state.animationGroup = null;
+  }
+}
+
+function playMoveAnimation(path, player) {
+  return new Promise((resolve) => {
+    if (!state.animationEnabled || !state.scene || !path || path.length < 2) {
+      resolve();
+      return;
+    }
+    clearMoveAnimation();
+
+    const group = new THREE.Group();
+    state.animationGroup = group;
+    state.scene.add(group);
+
+    // 高亮路径线
+    const linePts = path.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
+    const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
+    const lineMat = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.9,
+    });
+    group.add(new THREE.Line(lineGeo, lineMat));
+
+    // 移动棋子标记
+    const color = PLAYER_COLORS[player] || 0xffffff;
+    const marker = new THREE.Mesh(
+      new THREE.SphereGeometry(0.38, 12, 12),
+      new THREE.MeshBasicMaterial({ color })
+    );
+    group.add(marker);
+
+    const duration = Math.max(0.1, state.animationSpeed) * 1000;
+    const start = performance.now();
+
+    function tick(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const scaled = t * (path.length - 1);
+      const i = Math.min(path.length - 2, Math.floor(scaled));
+      const frac = scaled - i;
+      const a = path[i];
+      const b = path[i + 1];
+      marker.position.set(
+        a[0] + (b[0] - a[0]) * frac,
+        a[1] + (b[1] - a[1]) * frac,
+        a[2] + (b[2] - a[2]) * frac
+      );
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        clearMoveAnimation();
+        resolve();
+      }
+    }
+
+    requestAnimationFrame(tick);
+  });
 }
 
 function renderAiPlayerControls() {
@@ -668,6 +750,7 @@ window.PolyJumpDestroy = function () {
   state.aiPlayers = new Set();
   stopAutoReplay();
   stopAIMove();
+  clearMoveAnimation();
 };
 
 // 如果主菜单在主脚本就绪前就创建了对局，这里补初始化。
