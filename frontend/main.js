@@ -29,7 +29,7 @@ const state = {
   aiPlayers: new Set(),
   aiMoveTimer: null,
   animationEnabled: true,
-  animationSpeed: 0.5,
+  animationSpeed: 0.25,
   animationGroup: null,
 };
 
@@ -569,35 +569,54 @@ function playMoveAnimation(path, player) {
       return;
     }
 
-    // 高亮路径线
+    // 高亮路径线（白色背景用黑色高亮）
     const group = new THREE.Group();
     state.animationGroup = group;
     state.scene.add(group);
     const linePts = path.map((p) => new THREE.Vector3(p[0], p[1], p[2]));
     const lineGeo = new THREE.BufferGeometry().setFromPoints(linePts);
     const lineMat = new THREE.LineBasicMaterial({
-      color: 0xffffff,
+      color: 0x111111,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.95,
     });
     group.add(new THREE.Line(lineGeo, lineMat));
 
-    // 每跳固定速度，长路径按跳数增加总时长
-    const duration = Math.max(0.05, state.animationSpeed) * (path.length - 1) * 1000;
+    // 按空间弧长固定移动速度
+    const segLen = [];
+    const cum = [0];
+    let totalLen = 0;
+    for (let i = 0; i < path.length - 1; i++) {
+      const a = path[i];
+      const b = path[i + 1];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+      segLen.push(l);
+      totalLen += l;
+      cum.push(totalLen);
+    }
+
+    const duration = Math.max(0.05, totalLen * state.animationSpeed) * 1000;
     const start = performance.now();
+
+    function pointAt(target) {
+      let idx = 0;
+      while (idx < segLen.length - 1 && target > cum[idx + 1]) idx++;
+      const segStart = cum[idx];
+      const segEnd = cum[idx + 1];
+      const frac = segEnd > segStart ? (target - segStart) / (segEnd - segStart) : 0;
+      const a = path[idx];
+      const b = path[idx + 1];
+      return [
+        a[0] + (b[0] - a[0]) * frac,
+        a[1] + (b[1] - a[1]) * frac,
+        a[2] + (b[2] - a[2]) * frac,
+      ];
+    }
 
     function tick(now) {
       const t = Math.min(1, (now - start) / duration);
-      const scaled = t * (path.length - 1);
-      const i = Math.min(path.length - 2, Math.floor(scaled));
-      const frac = scaled - i;
-      const a = path[i];
-      const b = path[i + 1];
-      mesh.position.set(
-        a[0] + (b[0] - a[0]) * frac,
-        a[1] + (b[1] - a[1]) * frac,
-        a[2] + (b[2] - a[2]) * frac
-      );
+      const pos = pointAt(t * totalLen);
+      mesh.position.set(pos[0], pos[1], pos[2]);
       if (t < 1) {
         requestAnimationFrame(tick);
       } else {
