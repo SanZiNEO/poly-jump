@@ -77,13 +77,14 @@ def get_game_history(game_id: str):
 @app.get("/api/game/{game_id}/legal-moves")
 def legal_moves(game_id: str, piece: Optional[str] = None):
     state = _get_state(game_id)
-    paths = state.legal_moves()
     if piece:
         try:
             key = tuple(int(x) for x in piece.split(","))
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="piece 格式应为 x,y,z") from exc
-        paths = [p for p in paths if p[0] == key]
+        paths = state.legal_moves_for(key)
+    else:
+        paths = state.legal_moves()
 
     return {
         "player": state.current_player,

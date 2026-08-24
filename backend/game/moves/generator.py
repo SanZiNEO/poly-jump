@@ -32,6 +32,11 @@ class MoveGenerator:
             paths.extend(self.legal_moves_from(board, pos))
         return self._deduplicate(paths)
 
+    def legal_moves_for_piece(self, board: Board, player: int, pos: Point) -> List[Path]:
+        if board.get_piece(pos) != player:
+            return []
+        return self.legal_moves_from(board, pos)
+
     def legal_moves_from(self, board: Board, pos: Point) -> List[Path]:
         paths: List[Path] = []
         pos = tuple(pos)

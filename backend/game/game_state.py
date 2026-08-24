@@ -25,6 +25,11 @@ class GameState:
     def legal_moves(self):
         return MoveGenerator(self.config).legal_moves(self.board, self.current_player)
 
+    def legal_moves_for(self, pos) -> list:
+        return MoveGenerator(self.config).legal_moves_for_piece(
+            self.board, self.current_player, tuple(pos)
+        )
+
     def is_legal(self, path: Sequence[Sequence[int]]) -> bool:
         return MoveValidator(self.config).is_legal(
             self.board, self.current_player, path

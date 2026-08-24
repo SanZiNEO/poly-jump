@@ -22,7 +22,9 @@ class JumpGenerator:
         self.max_chain_length = max_chain_length
 
     def all_jump_paths(self, board: Board, pos: Point) -> List[Path]:
-        return self._recurse(board, [tuple(pos)], depth=0)
+        # 同一个落点只保留第一条到达路径；已经到达的中间点不再重复展开
+        seen_lands = {tuple(pos)}
+        return self._recurse(board, [tuple(pos)], depth=0, seen_lands=seen_lands)
 
     def has_any_jump(self, board: Board, pos: Point, exclude_path: Path) -> bool:
         for v in self.directions:
@@ -43,6 +45,7 @@ class JumpGenerator:
         board: Board,
         path: Path,
         depth: int,
+        seen_lands: set,
     ) -> List[Path]:
         results: List[Path] = []
         if self.max_chain_length and depth >= self.max_chain_length:
@@ -58,8 +61,10 @@ class JumpGenerator:
                 and board.is_inside(dest)
                 and board.is_empty(dest)
                 and dest not in path
+                and dest not in seen_lands
             ):
+                seen_lands.add(dest)
                 new_path = path + [dest]
                 results.append(new_path)
-                results.extend(self._recurse(board, new_path, depth + 1))
+                results.extend(self._recurse(board, new_path, depth + 1, seen_lands))
         return results
