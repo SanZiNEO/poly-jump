@@ -62,7 +62,12 @@ class GameState:
 
         # 积分：连跳临时分 / 吃子分 / 进入目标区分
         engine = ScoringEngine(self.config)
-        reached_target = path_t[-1] in self.board.player_targets.get(player, set())
+        target_set = self.board.player_targets.get(player, set())
+        # 只有“从目标区外进入目标区”才算一次；目标区内移动/穿过不算
+        reached_target = (
+            tuple(path_t[0]) not in target_set
+            and tuple(path_t[-1]) in target_set
+        )
         assessment = engine.assess_move(
             player, path_t, capture_count, reached_target
         )

@@ -258,7 +258,11 @@ class ScoringAwareAI(GraphProgressAI):
             capture_score = captures * scoring.capture_points
 
             target_score = 0
-            if target and tuple(end) in target:
+            if (
+                target
+                and tuple(start) not in target
+                and tuple(end) in target
+            ):
                 target_score = scoring.target_zone_points
 
             if progress < 0:

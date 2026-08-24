@@ -225,6 +225,7 @@ function readConfig() {
       mode: document.getElementById("capture-mode").value,
       capture_opponent_only: true,
       mixed_swap: false,
+      capture_in_base: document.getElementById("capture-in-base").checked,
     },
     goal: {
       objective: "FILL_TARGET",
