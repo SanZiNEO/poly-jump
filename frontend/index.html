@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PolyJump</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <section id="menu-page" class="page">
+    <header class="menu-header">
+      <h1>PolyJump</h1>
+      <p class="subtitle">可配置三维跳棋框架 · A / B 几何 · 规则自由组合</p>
+    </header>
+
+    <div class="menu-card">
+      <div class="menu-section">
+        <h2>棋盘</h2>
+
+        <label class="field">
+          <span>几何模型</span>
+          <select id="geometry">
+            <option value="A" selected>A 模型 · 正交网格</option>
+            <option value="B">B 模型 · FCC（后续支持）</option>
+          </select>
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>X</span>
+            <input id="board-x" type="number" value="9" min="3" max="15">
+          </label>
+          <label class="field">
+            <span>Y</span>
+            <input id="board-y" type="number" value="9" min="3" max="15">
+          </label>
+          <label class="field">
+            <span>Z</span>
+            <input id="board-z" type="number" value="9" min="3" max="15">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>玩家数</span>
+          <select id="players">
+            <option value="2" selected>2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="6">6</option>
+            <option value="8">8</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>棋子层数（自动）</span>
+          <input id="layers" type="number" value="4" disabled>
+        </label>
+        <p class="hint">层数 = max(2, ⌊最短边 ÷ 2⌋)</p>
+      </div>
+
+      <div class="menu-section">
+        <h2>移动方向</h2>
+        <p class="hint">三种基础方向独立开关，系统自动组合。</p>
+
+        <div class="switch-list">
+          <label class="switch-row">
+            <input type="checkbox" data-dir="6" checked>
+            <span>6 向 <small>轴方向</small></span>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" data-dir="12" checked>
+            <span>12 向 <small>面对角</small></span>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" data-dir="8" checked>
+            <span>8 向 <small>体对角</small></span>
+          </label>
+        </div>
+
+        <p id="direction-summary" class="summary">当前：6 + 12 + 8 = 26 向</p>
+
+        <label class="field">
+          <span>自定义向量（一行一个，如 2,1,0）</span>
+          <textarea id="custom-vectors" rows="3" placeholder="2,1,0&#10;2,2,1"></textarea>
+        </label>
+      </div>
+
+      <div class="menu-section">
+        <h2>规则</h2>
+
+        <div class="switch-list">
+          <label class="switch-row">
+            <input type="checkbox" id="allow-step" checked>
+            <span>允许普通移动</span>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" id="allow-jump" checked>
+            <span>允许跳跃</span>
+          </label>
+          <label class="switch-row">
+            <input type="checkbox" id="allow-chain" checked>
+            <span>允许连跳</span>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>连跳模式</span>
+          <select id="hop-mode">
+            <option value="FREE_STOP" selected>自由停</option>
+            <option value="FORCE_ALL">必须跳到底</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>吃子模式</span>
+          <select id="capture-mode">
+            <option value="NONE" selected>无</option>
+            <option value="CAPTURE">西洋跳棋式</option>
+            <option value="MIXED">混合式</option>
+          </select>
+        </label>
+
+        <button id="start-btn" class="primary-btn">开始游戏</button>
+        <p id="menu-error" class="error"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="game-page" class="page hidden">
+    <div id="hud">
+      <span id="status-text">加载中...</span>
+      <div id="player-roster"></div>
+      <button id="back-btn">返回主菜单</button>
+    </div>
+    <div id="scene-container"></div>
+  </section>
+
+  <script type="module" src="/menu.js"></script>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>
