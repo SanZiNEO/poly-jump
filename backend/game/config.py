@@ -1,8 +1,8 @@
 """PolyJump 配置类与校验。
 
 设计依据 docs/05-configuration.md、docs/06-architecture.md。
-本项目第一版先完整实现 A 模型 + 2 人局；B 模型和多于 2 人的基地分配
-留接口并标注 TODO，不阻塞最小可玩版本。
+A 模型：全整数 XYZ 立方格。
+B 模型：纯 12 向 FCC / L1 球偶子晶格，b_radius 为偶数。
 """
 
 from __future__ import annotations
@@ -66,6 +66,7 @@ class PolyJumpConfig(BaseModel):
     game_name: str = "PolyJump"
     geometry: Literal["A", "B"] = "A"
     board_size: Tuple[int, int, int] = (9, 9, 9)
+    b_radius: int = 6
     players: int = 2
     direction_set: Union[int, List[int]] = Field(default_factory=lambda: [6, 12, 8])
     custom_vectors: List[Tuple[int, int, int]] = Field(default_factory=list)
@@ -107,10 +108,12 @@ class PolyJumpConfig(BaseModel):
     @model_validator(mode="after")
     def _validate_geometry(self) -> "PolyJumpConfig":
         if self.geometry == "B":
-            # B 模型在第一版中仅保留接口/TODO。
-            # 配置层面仍允许创建，但 Board 初始化时会明确报“未实现”。
-            if any(v % 2 == 0 for v in self.board_size):
-                raise ValueError("B 模型边长必须为奇数")
+            if self.b_radius <= 0 or self.b_radius % 2 != 0:
+                raise ValueError("B 模型 b_radius 必须为正偶数")
+            if self.players not in (2, 3, 4, 6):
+                raise ValueError("B 模型第一版支持 2 / 3 / 4 / 6 人")
+            # B 模型标准移动固定为 12 向
+            self.direction_set = [12]
         return self
 
     def resolved_direction_set(self) -> List[int]:

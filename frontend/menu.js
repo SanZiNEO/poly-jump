@@ -34,6 +34,13 @@ function updateLayers() {
   document.getElementById("layers").value = autoLayers();
 }
 
+function updateGeometryFields() {
+  const isB = document.getElementById("geometry").value === "B";
+  document.getElementById("b-radius-field").classList.toggle("hidden", !isB);
+  document.getElementById("layers-field").classList.toggle("hidden", isB);
+  document.getElementById("layers-hint").classList.toggle("hidden", isB);
+}
+
 function selectedDirections() {
   return Array.from(
     document.querySelectorAll("input[data-dir]:checked")
@@ -51,18 +58,29 @@ function updateDirectionSummary() {
 }
 
 function readConfig() {
+  const geometry = document.getElementById("geometry").value;
   const dirs = selectedDirections();
-  if (dirs.length === 0) {
+  if (geometry === "A" && dirs.length === 0) {
     throw new Error("请至少选择一种基础方向");
+  }
+
+  const players = parseInt(document.getElementById("players").value, 10);
+  const bRadius = parseInt(document.getElementById("b-radius").value, 10);
+  if (geometry === "B" && (bRadius <= 0 || bRadius % 2 !== 0)) {
+    throw new Error("B 模型半径必须为正偶数");
+  }
+  if (geometry === "B" && players === 8) {
+    throw new Error("B 模型第一版支持 2 / 3 / 4 / 6 人");
   }
 
   return {
     game_name: "PolyJump",
-    geometry: document.getElementById("geometry").value,
+    geometry,
     board_size: boardSize(),
-    players: parseInt(document.getElementById("players").value, 10),
-    direction_set: dirs,
-    custom_vectors: parseCustomVectors(document.getElementById("custom-vectors").value),
+    b_radius: bRadius,
+    players,
+    direction_set: geometry === "B" ? [12] : dirs,
+    custom_vectors: geometry === "B" ? [] : parseCustomVectors(document.getElementById("custom-vectors").value),
     movement: {
       allow_step: document.getElementById("allow-step").checked,
       allow_jump: document.getElementById("allow-jump").checked,
@@ -144,5 +162,13 @@ document.querySelectorAll("input[data-dir]").forEach((el) => {
   el.addEventListener("change", updateDirectionSummary);
 });
 
+document.getElementById("geometry").addEventListener("change", () => {
+  updateGeometryFields();
+  if (document.getElementById("geometry").value === "A") {
+    updateLayers();
+  }
+});
+
+updateGeometryFields();
 updateLayers();
 updateDirectionSummary();

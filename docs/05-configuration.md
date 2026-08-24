@@ -24,6 +24,7 @@
   "game_name": "PolyJump",
   "geometry": "A",
   "board_size": [9, 9, 9],
+  "b_radius": 6,
   "players": 2,
   "player_assignments": [],
   "direction_set": [6, 12, 8],
@@ -75,9 +76,10 @@
 | 字段 | 值 | 说明 |
 |---|---|---|
 | `geometry` | `A` / `B` | 选择几何模型 |
-| `board_size` | `[x, y, z]` | A 模型；B 模型必须奇数边长 |
+| `board_size` | `[x, y, z]` | A 模型使用 |
+| `b_radius` | 偶数，如 `6` | B 模型 L1 球半径 |
 | `origin` | `CORNER` / `CENTER` | A 用 CORNER，B 用 CENTER |
-| `fcc_parity` | `0` / `1` | B 模型子晶格选择 |
+| `fcc_parity` | `0` | B 模型固定使用偶子晶格 |
 | `valid_points` | list | 可选：显式给出合法点集 |
 
 ---
@@ -185,15 +187,16 @@ MIXED   ：被跳过棋子移动到吃子者起点
 
 | 字段 | 说明 |
 |---|---|
-| `shape` | `TETRA_PYRAMID` / `SQUARE_PYRAMID` / `CUSTOM` |
-| `layers` | 金字塔层数 |
+| `shape` | `TETRA_PYRAMID` / `SQUARE_PYRAMID` / `B_TIP_PYRAMID` / `CUSTOM` |
+| `layers` | A 模型金字塔层数；B 模型由 b_radius 自动取 R/2 |
 | `custom_layout` | 显式坐标列表 |
 
 ### 9.1 形状区别
 
 ```text
-TETRA_PYRAMID  = 1+3+6+10+... (20子/4层)
-SQUARE_PYRAMID = 1+4+9+16+... (30子/4层)
+TETRA_PYRAMID   = 1+3+6+10+... (20子/4层)
+SQUARE_PYRAMID  = 1+4+9+16+... (30子/4层)
+B_TIP_PYRAMID   = B 模型尖端基地：1+4+9+... 共 R/2 层
 ```
 
 ---
@@ -246,6 +249,7 @@ class GoalConfig:
 class PolyJumpConfig:
     geometry: Literal["A", "B"] = "A"
     board_size: Tuple[int, int, int] = (9, 9, 9)
+    b_radius: int = 6
     players: int = 2
     direction_set: List[int] = field(default_factory=lambda: [6, 12, 8])
     custom_vectors: List[Tuple[int, int, int]] = field(default_factory=list)
@@ -261,7 +265,7 @@ class PolyJumpConfig:
 
 实现时建议包含一个校验器：
 
-- 检查 B 模型边长是否奇数
+- 检查 B 模型 b_radius 是否为偶数
 - 检查方向集是否合法
 - 检查玩家数是否在允许列表
 - 检查基地之间是否重叠

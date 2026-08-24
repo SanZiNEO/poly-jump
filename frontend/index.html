@@ -48,6 +48,11 @@
           </label>
         </div>
 
+        <label class="field hidden" id="b-radius-field">
+          <span>B 模型半径（偶数）</span>
+          <input id="b-radius" type="number" value="6" min="2" max="10" step="2">
+        </label>
+
         <label class="field">
           <span>玩家数</span>
           <select id="players">
@@ -59,11 +64,11 @@
           </select>
         </label>
 
-        <label class="field">
+        <label class="field" id="layers-field">
           <span>棋子层数（自动）</span>
           <input id="layers" type="number" value="4" disabled>
         </label>
-        <p class="hint">层数 = max(2, ⌊最短边 ÷ 2⌋)</p>
+        <p class="hint" id="layers-hint">层数 = max(2, ⌊最短边 ÷ 2⌋)</p>
       </div>
 
       <div class="menu-section">

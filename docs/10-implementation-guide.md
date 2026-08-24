@@ -209,7 +209,8 @@ function onDestinationClick(pos) {
 - [ ] 多玩家轮转
 - [ ] 目标区校验
 - [ ] A 模型 / B 模型切换
-- [ ] B 模型奇偶性检查
+- [ ] B 模型：纯 12 向 L1 偶子晶格，b_radius 为偶数
+- [ ] B 模型六尖端基地与 R/2 层初始布局
 
 ---
 

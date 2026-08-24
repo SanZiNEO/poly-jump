@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PolyJump · B 模型点阵探索</title>
+  <link rel="stylesheet" href="/style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <section id="preview-page" class="page">
+    <header class="menu-header">
+      <h1>B 模型点阵探索</h1>
+      <p class="subtitle">5×5×5 FCC 子晶格 + 外部四棱锥候选形状</p>
+    </header>
+
+    <div class="preview-layout">
+      <div class="preview-controls">
+        <h2>连通优先候选</h2>
+        <label class="switch-row">
+          <input type="checkbox" id="show-candidate" checked>
+          <span>L1 球 · 偶子晶格（12 向连通）</span>
+        </label>
+        <hr>
+        <label class="switch-row">
+          <input type="checkbox" id="show-lines" checked>
+          <span>显示 12 向连线</span>
+        </label>
+        <label class="switch-row">
+          <input type="checkbox" id="show-cube">
+          <span>中心立方体参考线框</span>
+        </label>
+        <label class="switch-row">
+          <input type="checkbox" id="show-arms">
+          <span>外部立方体参考线框</span>
+        </label>
+        <div class="preview-stats">
+          <strong>当前点数</strong>
+          <span id="point-count">0</span>
+        </div>
+        <p class="hint">鼠标左键旋转 / 右键平移 / 滚轮缩放</p>
+      </div>
+      <div id="preview-scene"></div>
+    </div>
+  </section>
+
+  <script type="module" src="/b_model_preview.js"></script>
+</body>
+</html>
