@@ -19,6 +19,8 @@ class GameState:
         self.current_player: int = 1
         self.winner: Optional[int] = None
         self.move_history: List[dict] = []
+        self.initial_pieces: dict = dict(self.board.pieces)
+        self.snapshots: List[dict] = []
 
     def legal_moves(self):
         return MoveGenerator(self.config).legal_moves(self.board, self.current_player)
@@ -47,6 +49,7 @@ class GameState:
         )
 
         self.winner = check_winner(self.board, self.config)
+        self.snapshots.append(dict(self.board.pieces))
         if self.winner is None:
             self._advance_turn()
         return True

@@ -13,6 +13,26 @@ def path_to_lists(path: Sequence[Sequence[int]]) -> List[List[int]]:
     return [list(p) for p in path]
 
 
+def history_to_dict(state: Any) -> Dict[str, Any]:
+    return {
+        "game_id": state.id,
+        "config": state.config.model_dump(),
+        "moves": list(state.move_history),
+        "winner": state.winner,
+        "initial_pieces": {
+            point_key(pos): owner
+            for pos, owner in state.initial_pieces.items()
+        },
+        "snapshots": [
+            {
+                point_key(pos): owner
+                for pos, owner in snap.items()
+            }
+            for snap in state.snapshots
+        ],
+    }
+
+
 def state_to_dict(state: Any) -> Dict[str, Any]:
     board = state.board
     return {

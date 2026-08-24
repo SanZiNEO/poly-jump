@@ -20,6 +20,11 @@ const state = {
   pointer: new THREE.Vector2(),
   downPos: null,
   cameraInitialized: false,
+  historyData: null,
+  replayStep: null,
+  replayMode: false,
+  replayTimer: null,
+  replayControlsAttached: false,
 };
 
 const PLAYER_COLORS = {
@@ -260,6 +265,105 @@ function updateHud(board) {
   updatePlayerRoster(board.config, board.current_player);
 }
 
+function boardWithPieces(pieces) {
+  const b = { ...state.board };
+  b.pieces = pieces;
+  return b;
+}
+
+function piecesForStep(step) {
+  const h = state.historyData;
+  if (!h) return {};
+  if (step === 0) return { ...h.initial_pieces };
+  if (step <= h.snapshots.length) return { ...h.snapshots[step - 1] };
+  return { ...h.snapshots[h.snapshots.length - 1] };
+}
+
+function renderHistoryList() {
+  const list = document.getElementById("history-moves");
+  if (!list) return;
+  list.innerHTML = "";
+
+  const h = state.historyData;
+  if (!h) return;
+
+  const items = [{ step: 0, text: "开局" }];
+  h.moves.forEach((m, i) => {
+    const pathText = m.path.map((p) => p.join(",")).join(" → ");
+    items.push({ step: i + 1, text: `${i + 1}. P${m.player} ${pathText}` });
+  });
+
+  items.forEach((item) => {
+    const div = document.createElement("div");
+    div.className = "move-item" + (state.replayStep === item.step ? " current" : "");
+    div.textContent = item.text;
+    div.addEventListener("click", () => setReplayStep(item.step));
+    list.appendChild(div);
+  });
+}
+
+function setReplayStep(step) {
+  const h = state.historyData;
+  if (!h) return;
+  const max = h.snapshots.length;
+  step = Math.max(0, Math.min(step, max));
+
+  state.replayStep = step;
+  state.replayMode = true;
+  renderBoard(boardWithPieces(piecesForStep(step)));
+
+  const status = document.getElementById("status-text");
+  if (step === 0) status.textContent = "回放中：开局";
+  else if (step === max) status.textContent = `回放中：最后一手 (${max})`;
+  else status.textContent = `回放中：第 ${step} 手`;
+
+  renderHistoryList();
+}
+
+function stopAutoReplay() {
+  if (state.replayTimer) {
+    clearInterval(state.replayTimer);
+    state.replayTimer = null;
+  }
+  const btn = document.getElementById("replay-auto");
+  if (btn) btn.textContent = "自动播放";
+}
+
+function startAutoReplay() {
+  stopAutoReplay();
+  const h = state.historyData;
+  if (!h) return;
+  let step = state.replayStep ?? 0;
+  state.replayTimer = setInterval(() => {
+    if (step >= h.snapshots.length) {
+      stopAutoReplay();
+      return;
+    }
+    step += 1;
+    setReplayStep(step);
+  }, 800);
+  const btn = document.getElementById("replay-auto");
+  if (btn) btn.textContent = "停止";
+}
+
+async function loadHistory(gameId) {
+  const res = await fetch(`/api/game/${gameId}/history`);
+  if (!res.ok) return;
+  state.historyData = await res.json();
+  renderHistoryList();
+}
+
+function attachReplayControls() {
+  document.getElementById("replay-start").addEventListener("click", () => setReplayStep(0));
+  document.getElementById("replay-prev").addEventListener("click", () => setReplayStep((state.replayStep ?? 1) - 1));
+  document.getElementById("replay-next").addEventListener("click", () => setReplayStep((state.replayStep ?? -1) + 1));
+  document.getElementById("replay-end").addEventListener("click", () => setReplayStep(state.historyData ? state.historyData.snapshots.length : 0));
+  document.getElementById("replay-auto").addEventListener("click", () => {
+    if (state.replayTimer) stopAutoReplay();
+    else startAutoReplay();
+  });
+}
+
 function clearHighlights() {
   clearGroup(state.highlightGroup);
 }
@@ -328,8 +432,12 @@ async function submitMove(path) {
   state.board = data.state;
   state.selected = null;
   state.legalPaths = [];
+  state.replayMode = false;
+  state.replayStep = null;
+  stopAutoReplay();
   renderBoard(state.board);
   updateHud(state.board);
+  await loadHistory(state.gameId);
 }
 
 function findPathTo(dest) {
@@ -341,6 +449,7 @@ function onPointerDown(e) {
 }
 
 async function onPointerUp(e) {
+  if (state.replayMode) return;
   if (!state.downPos) return;
   const dx = e.clientX - state.downPos[0];
   const dy = e.clientY - state.downPos[1];
@@ -393,11 +502,19 @@ window.PolyJumpInit = function (gameId, initialBoard) {
   state.board = initialBoard;
   state.selected = null;
   state.legalPaths = [];
+  state.replayMode = false;
+  state.replayStep = null;
+  state.historyData = null;
   setupRenderer();
   renderBoard(state.board);
   centerCameraOn(state.board);
   state.cameraInitialized = true;
   updateHud(state.board);
+  if (!state.replayControlsAttached) {
+    attachReplayControls();
+    state.replayControlsAttached = true;
+  }
+  loadHistory(gameId);
   animate();
 };
 
@@ -414,6 +531,11 @@ window.PolyJumpDestroy = function () {
   state.gameId = null;
   state.board = null;
   state.cameraInitialized = false;
+  state.historyData = null;
+  state.replayStep = null;
+  state.replayMode = false;
+  state.replayControlsAttached = false;
+  stopAutoReplay();
 };
 
 // 如果主菜单在主脚本就绪前就创建了对局，这里补初始化。

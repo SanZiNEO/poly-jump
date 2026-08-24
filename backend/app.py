@@ -17,7 +17,7 @@ from .game.ai import RandomAI
 from .game.config import PolyJumpConfig
 from .game.direction_registry import get_available_sets
 from .game.game_state import GameState
-from .game.serializers import path_to_lists, state_to_dict
+from .game.serializers import history_to_dict, path_to_lists, state_to_dict
 
 app = FastAPI(title="PolyJump", version="0.1.0")
 
@@ -66,6 +66,12 @@ def new_game(req: NewGameRequest):
 def get_game(game_id: str):
     state = _get_state(game_id)
     return state_to_dict(state)
+
+
+@app.get("/api/game/{game_id}/history")
+def get_game_history(game_id: str):
+    state = _get_state(game_id)
+    return history_to_dict(state)
 
 
 @app.get("/api/game/{game_id}/legal-moves")
