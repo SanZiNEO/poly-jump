@@ -16,8 +16,17 @@ python -m uvicorn backend.app:app --reload
 | GET | `/api/game/{id}` | 当前局面 |
 | GET | `/api/game/{id}/legal-moves` | 合法路径 |
 | POST | `/api/game/{id}/move` | 执行移动 |
-| POST | `/api/game/{id}/ai-move` | 随机 AI 走一步 |
+| POST | `/api/game/{id}/ai-move` | AI 走一步（默认 graph_progress） |
 | GET | `/api/game/{id}/history` | 棋谱/回放 |
+
+`ai-move` 支持：
+
+```text
+ai_type=graph_progress  # 默认，图距离贪心
+ai_type=progress        # 连跳奖励贪心
+ai_type=greedy          # 简单贪心
+ai_type=random          # 随机
+```
 
 ## 2. Python GameEnv
 

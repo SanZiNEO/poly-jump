@@ -121,8 +121,11 @@ goal.first_to_finish_wins
 scoring.enabled
 scoring.chain_jump_points
 scoring.chain_temp
+scoring.chain_max_scoring
 scoring.capture_points
 scoring.target_zone_points
 scoring.first_finish_reward
 scoring.survivor_piece_points
 ```
+
+`chain_max_scoring` 只限制连跳**计分次数**，不限制连跳本身长度。
