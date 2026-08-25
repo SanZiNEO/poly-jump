@@ -40,8 +40,9 @@ ai_research/
 | 参数 | 默认 | 说明 |
 |---|---|---|
 | `--agents` | `random,manhattan,euclidean,chebyshev,graph_bfs` | 参与评测的 AI |
-| `--games` | `10` | 每对组合各跑几局 |
+| `--games` | `10` | 每局组合各跑几局 |
 | `--radius` | `6` | B 模型半径 R |
+| `--players` | `2` | B 模型玩家人数（2/3/4/6） |
 | `--max-steps` | `2000` | 单局最大步数 |
 | `--seed` | `42` | 随机种子 |
 | `--out` | `ai_research/runs` | 输出根目录 |
@@ -50,6 +51,12 @@ ai_research/
 
 ```powershell
 .poly_jump\Scripts\python.exe -m ai_research.runner --agents manhattan,graph_bfs --games 20
+```
+
+示例：3 人局，用随机、图距离、切比雪夫三个 AI 打 5 局：
+
+```powershell
+.poly_jump\Scripts\python.exe -m ai_research.runner --players 3 --agents random,graph_bfs,chebyshev --games 5
 ```
 
 ## 输出说明

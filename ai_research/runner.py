@@ -21,6 +21,7 @@ import json
 import random
 import sys
 from datetime import datetime
+from itertools import combinations
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 
@@ -60,13 +61,13 @@ DEFAULT_AGENTS = ",".join(AGENT_REGISTRY.keys())
 DEFAULT_OUT = Path(__file__).resolve().parent / "runs"
 
 
-def make_b2_config(radius: int = 6) -> PolyJumpConfig:
-    """B 模型 2 人局：核心跳棋规则、无吃子、无计分。"""
+def make_b_config(radius: int = 6, players: int = 2) -> PolyJumpConfig:
+    """B 模型基准：核心跳棋规则、无吃子、无计分。"""
     return PolyJumpConfig(
-        game_name="PolyJump-B2-Benchmark",
+        game_name=f"PolyJump-B{players}-Benchmark",
         geometry="B",
         b_radius=radius,
-        players=2,
+        players=players,
         movement=MovementConfig(
             allow_step=True,
             allow_jump=True,
@@ -135,15 +136,21 @@ def build_summary_markdown(summary: dict, agents_info: Dict[str, str]) -> str:
             f"| {row['avg_left_per_game']} | {row['avg_through_per_game']} | {row['avg_path_length']} |"
         )
     lines.append("")
-    lines.append("## 配对结果")
-    lines.append("")
-    lines.append("| 配对 | A 胜 | B 胜 | 平局 | 平均步数 |")
-    lines.append("|---|---|---|---|---|")
-    for pair, row in summary["pairs"].items():
-        lines.append(
-            f"| {pair} | {row['a_wins']} | {row['b_wins']} | {row['draws']} | {row['avg_moves']} |"
-        )
-    lines.append("")
+    if summary["pairs"]:
+        lines.append("## 配对结果")
+        lines.append("")
+        lines.append("| 配对 | A 胜 | B 胜 | 平局 | 平均步数 |")
+        lines.append("|---|---|---|---|---|")
+        for pair, row in summary["pairs"].items():
+            lines.append(
+                f"| {pair} | {row['a_wins']} | {row['b_wins']} | {row['draws']} | {row['avg_moves']} |"
+            )
+        lines.append("")
+    else:
+        lines.append("## 配对结果")
+        lines.append("")
+        lines.append("（多人局不生成两两配对表，请看上方各 AI 汇总指标。）")
+        lines.append("")
     lines.append("## 说明")
     lines.append("- 计分已关闭，只比“谁先把棋子搬到对方目标区”的效率。")
     lines.append("- `平均离开目标区次数` 越小越好；这正是“进目标区又出来”的问题指标。")
@@ -153,8 +160,9 @@ def build_summary_markdown(summary: dict, agents_info: Dict[str, str]) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description="PolyJump AI 基准评测")
     parser.add_argument("--agents", default=DEFAULT_AGENTS, help="逗号分隔的 agent slug")
-    parser.add_argument("--games", type=int, default=10, help="每对组合各跑多少局")
+    parser.add_argument("--games", type=int, default=10, help="每局组合各跑多少局")
     parser.add_argument("--radius", type=int, default=6, help="B 模型半径 R")
+    parser.add_argument("--players", type=int, default=2, choices=[2, 3, 4, 6], help="B 模型玩家人数")
     parser.add_argument("--max-steps", type=int, default=2000, help="单局最大步数")
     parser.add_argument("--seed", type=int, default=42, help="随机种子")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="输出根目录")
@@ -165,9 +173,12 @@ def main() -> int:
     if unknown:
         print(f"未知 agent: {unknown}，可选: {list(AGENT_REGISTRY)}")
         return 1
+    if len(agent_slugs) < args.players:
+        print(f"玩家人数 {args.players}，但只提供了 {len(agent_slugs)} 个 AI，需要至少 {args.players} 个")
+        return 1
 
     random.seed(args.seed)
-    config = make_b2_config(args.radius)
+    config = make_b_config(args.radius, args.players)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = args.out / timestamp
@@ -192,18 +203,52 @@ def main() -> int:
     agents_info = {slug: AGENT_REGISTRY[slug]().display_name for slug in agent_slugs}
 
     game_index = 0
-    total_pairs = len(agent_slugs) * (len(agent_slugs) - 1) // 2
-    total_games = total_pairs * args.games
-    print(f"开始评测：B 模型 2 人，R={args.radius}，agent={agent_slugs}")
-    print(f"共 {total_pairs} 个配对 × {args.games} 局 = {total_games} 局")
+    if args.players == 2:
+        total_pairs = len(agent_slugs) * (len(agent_slugs) - 1) // 2
+        total_games = total_pairs * args.games
+        print(f"开始评测：B 模型 2 人，R={args.radius}，agent={agent_slugs}")
+        print(f"共 {total_pairs} 个配对 × {args.games} 局 = {total_games} 局")
 
-    for i, a_slug in enumerate(agent_slugs):
-        for b_slug in agent_slugs[i + 1:]:
+        for i, a_slug in enumerate(agent_slugs):
+            for b_slug in agent_slugs[i + 1:]:
+                for g in range(args.games):
+                    if g % 2 == 0:
+                        player_agent_slugs = {1: a_slug, 2: b_slug}
+                    else:
+                        player_agent_slugs = {1: b_slug, 2: a_slug}
+
+                    env = GameEnv(config)
+                    agents = {
+                        p: AGENT_REGISTRY[slug]()
+                        for p, slug in player_agent_slugs.items()
+                    }
+                    match = play_one_game(env, agents, args.max_steps)
+                    match["player_agent"] = player_agent_slugs
+
+                    game_index += 1
+                    match_path = matches_dir / f"game_{game_index:04d}.json"
+                    with match_path.open("w", encoding="utf-8") as f:
+                        json.dump(match, f, ensure_ascii=False, indent=2)
+
+                    matches.append(match)
+                    print(
+                        f"[{game_index}/{total_games}] {a_slug} vs {b_slug} "
+                        f"(side {player_agent_slugs[1]}/{player_agent_slugs[2]}) "
+                        f"winner={match.get('winner')} moves={match.get('moves')}"
+                    )
+    else:
+        combos = list(combinations(agent_slugs, args.players))
+        total_games = len(combos) * args.games
+        print(f"开始评测：B 模型 {args.players} 人，R={args.radius}，agent={agent_slugs}")
+        print(f"共 {len(combos)} 个组合 × {args.games} 局 = {total_games} 局")
+
+        for combo in combos:
             for g in range(args.games):
-                if g % 2 == 0:
-                    player_agent_slugs = {1: a_slug, 2: b_slug}
-                else:
-                    player_agent_slugs = {1: b_slug, 2: a_slug}
+                # 轮转座位：不同局让每个 AI 坐到不同玩家位，减少先后手偏差
+                player_agent_slugs = {
+                    p + 1: combo[(g + p) % args.players]
+                    for p in range(args.players)
+                }
 
                 env = GameEnv(config)
                 agents = {
@@ -219,9 +264,9 @@ def main() -> int:
                     json.dump(match, f, ensure_ascii=False, indent=2)
 
                 matches.append(match)
+                lineup = "/".join(player_agent_slugs.values())
                 print(
-                    f"[{game_index}/{total_games}] {a_slug} vs {b_slug} "
-                    f"(side {player_agent_slugs[1]}/{player_agent_slugs[2]}) "
+                    f"[{game_index}/{total_games}] {lineup} "
                     f"winner={match.get('winner')} moves={match.get('moves')}"
                 )
 
