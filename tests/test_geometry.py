@@ -46,15 +46,30 @@ def test_pyramid_outward_layers():
     assert (0, 0, 1) in home1
 
 
-def test_a_three_four_player_targets_empty():
-    for players, base_indices in [(3, [0, 4, 5]), (4, [0, 4, 5, 6])]:
+def test_a_three_player_targets_empty():
+    geometry = make_geometry()
+    geometry.config.players = 3
+    bases, targets = geometry.player_assignments()
+
+    base_positions = {p for base in bases.values() for p in base}
+    target_positions = {p for target in targets.values() for p in target}
+    assert base_positions.isdisjoint(target_positions)
+
+
+def test_a_even_player_targets_are_opponent_bases():
+    # 偶数人局必须是两两对角：每个玩家的目标区恰好是另一个玩家的起始基地。
+    for players in (2, 4, 6, 8):
         geometry = make_geometry()
         geometry.config.players = players
         bases, targets = geometry.player_assignments()
 
-        base_positions = {p for base in bases.values() for p in base}
-        target_positions = {p for target in targets.values() for p in target}
-        assert base_positions.isdisjoint(target_positions)
+        for p in range(1, players + 1):
+            assert targets[p]
+            matches = [
+                q for q in range(1, players + 1)
+                if q != p and set(targets[p]) == set(bases[q])
+            ]
+            assert len(matches) == 1, f"players={players}, p={p}"
 
 
 def test_a_six_eight_player_assignments():
