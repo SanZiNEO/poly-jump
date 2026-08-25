@@ -40,9 +40,13 @@ ai_research/
 | 参数 | 默认 | 说明 |
 |---|---|---|
 | `--agents` | `random,manhattan,euclidean,chebyshev,graph_bfs` | 参与评测的 AI |
-| `--games` | `10` | 每局组合各跑几局 |
+| `--games` | `10` | 每局组合各跑多少局 |
+| `--geometry` | `B` | 几何模型：`A` / `B` |
 | `--radius` | `6` | B 模型半径 R |
-| `--players` | `2` | B 模型玩家人数（2/3/4/6） |
+| `--size` | `9,9,9` | A 模型棋盘大小 |
+| `--layers` | `0` | A 模型起始层数；0=自动按最短边 |
+| `--direction-set` | 空 | A 模型方向集，如 `6` 或 `6,12,8` |
+| `--players` | `2` | 玩家人数（2/3/4/6；A 模型支持 8） |
 | `--max-steps` | `2000` | 单局最大步数 |
 | `--seed` | `42` | 随机种子 |
 | `--out` | `ai_research/runs` | 输出根目录 |
@@ -57,6 +61,12 @@ ai_research/
 
 ```powershell
 .poly_jump\Scripts\python.exe -m ai_research.runner --players 3 --agents random,graph_bfs,chebyshev --games 5
+```
+
+示例：A 模型 2 人局，使用 6 方向，小规模快速测试：
+
+```powershell
+.poly_jump\Scripts\python.exe -m ai_research.runner --geometry A --size 7,7,7 --direction-set 6 --games 3 --max-steps 500
 ```
 
 ## 输出说明

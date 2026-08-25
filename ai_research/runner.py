@@ -35,6 +35,7 @@ from backend.game.config import (
     CaptureMode,
     GoalConfig,
     HopMode,
+    InitialLayoutConfig,
     MovementConfig,
     PolyJumpConfig,
     ScoringConfig,
@@ -91,6 +92,71 @@ def make_b_config(radius: int = 6, players: int = 2) -> PolyJumpConfig:
         ),
         scoring=ScoringConfig(enabled=False),
     )
+
+
+def make_a_config(
+    players: int = 2,
+    size: tuple = (9, 9, 9),
+    direction_set: Optional[List[int]] = None,
+    layers: int = 0,
+) -> PolyJumpConfig:
+    """A 模型基准：标准 XYZ 网格、核心跳棋规则、无吃子、无计分。"""
+    if direction_set is None:
+        direction_set = [6, 12, 8]
+    if layers <= 0:
+        layers = max(2, min(size) // 2)
+    return PolyJumpConfig(
+        game_name=f"PolyJump-A{players}-Benchmark",
+        geometry="A",
+        board_size=size,
+        players=players,
+        direction_set=direction_set,
+        initial_layout=InitialLayoutConfig(
+            shape="TETRA_PYRAMID",
+            layers=layers,
+        ),
+        movement=MovementConfig(
+            allow_step=True,
+            allow_jump=True,
+            allow_chain=True,
+            hop_mode=HopMode.FREE_STOP,
+            two_step_hop=False,
+        ),
+        capture=CaptureConfig(
+            mode=CaptureMode.NONE,
+            capture_opponent_only=True,
+            mixed_swap=False,
+            capture_in_base=False,
+        ),
+        goal=GoalConfig(
+            objective="FILL_TARGET",
+            target_region="OPPOSITE_CORNER",
+            must_fill_all_cells=True,
+            allow_pass_through_enemy=True,
+            allow_stay_in_enemy=False,
+            first_to_finish_wins=True,
+        ),
+        scoring=ScoringConfig(enabled=False),
+    )
+
+
+def build_config(args: argparse.Namespace) -> PolyJumpConfig:
+    """根据 CLI 参数生成评测配置。"""
+    if args.geometry == "A":
+        size = tuple(int(v) for v in args.size.split(","))
+        direction_set = None
+        if args.direction_set:
+            direction_set = [int(v.strip()) for v in args.direction_set.split(",") if v.strip()]
+        return make_a_config(
+            players=args.players,
+            size=size,
+            direction_set=direction_set,
+            layers=args.layers,
+        )
+    if args.players == 8:
+        print("B 模型不支持 8 人局，请改用 A 模型或 2/3/4/6 人")
+        raise SystemExit(1)
+    return make_b_config(args.radius, args.players)
 
 
 def play_one_game(
@@ -159,10 +225,14 @@ def build_summary_markdown(summary: dict, agents_info: Dict[str, str]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="PolyJump AI 基准评测")
+    parser.add_argument("--geometry", default="B", choices=["A", "B"], help="几何模型")
     parser.add_argument("--agents", default=DEFAULT_AGENTS, help="逗号分隔的 agent slug")
     parser.add_argument("--games", type=int, default=10, help="每局组合各跑多少局")
     parser.add_argument("--radius", type=int, default=6, help="B 模型半径 R")
-    parser.add_argument("--players", type=int, default=2, choices=[2, 3, 4, 6], help="B 模型玩家人数")
+    parser.add_argument("--size", default="9,9,9", help="A 模型棋盘大小 x,y,z")
+    parser.add_argument("--layers", type=int, default=0, help="A 模型起始层数；0=按最短边自动")
+    parser.add_argument("--direction-set", default="", help="A 模型方向集，逗号分隔，如 6 或 6,12,8")
+    parser.add_argument("--players", type=int, default=2, choices=[2, 3, 4, 6, 8], help="玩家人数")
     parser.add_argument("--max-steps", type=int, default=2000, help="单局最大步数")
     parser.add_argument("--seed", type=int, default=42, help="随机种子")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="输出根目录")
@@ -178,7 +248,7 @@ def main() -> int:
         return 1
 
     random.seed(args.seed)
-    config = make_b_config(args.radius, args.players)
+    config = build_config(args)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     run_dir = args.out / timestamp
@@ -203,10 +273,14 @@ def main() -> int:
     agents_info = {slug: AGENT_REGISTRY[slug]().display_name for slug in agent_slugs}
 
     game_index = 0
+    if args.geometry == "A":
+        geom_desc = f"A 模型 {args.players} 人，size={args.size}"
+    else:
+        geom_desc = f"B 模型 {args.players} 人，R={args.radius}"
     if args.players == 2:
         total_pairs = len(agent_slugs) * (len(agent_slugs) - 1) // 2
         total_games = total_pairs * args.games
-        print(f"开始评测：B 模型 2 人，R={args.radius}，agent={agent_slugs}")
+        print(f"开始评测：{geom_desc}，agent={agent_slugs}")
         print(f"共 {total_pairs} 个配对 × {args.games} 局 = {total_games} 局")
 
         for i, a_slug in enumerate(agent_slugs):
@@ -239,7 +313,7 @@ def main() -> int:
     else:
         combos = list(combinations(agent_slugs, args.players))
         total_games = len(combos) * args.games
-        print(f"开始评测：B 模型 {args.players} 人，R={args.radius}，agent={agent_slugs}")
+        print(f"开始评测：{geom_desc}，agent={agent_slugs}")
         print(f"共 {len(combos)} 个组合 × {args.games} 局 = {total_games} 局")
 
         for combo in combos:
