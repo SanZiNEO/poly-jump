@@ -15,6 +15,7 @@ const state = {
   pointGroup: null,
   pieceGroup: null,
   routeGroup: null,
+  frontPointGroup: null,
   highlightGroup: null,
   interactedMeshes: [],
   raycaster: new THREE.Raycaster(),
@@ -110,9 +111,16 @@ function setupRenderer() {
   const pointGroup = new THREE.Group();
   const pieceGroup = new THREE.Group();
   const routeGroup = new THREE.Group();
+  const frontPointGroup = new THREE.Group();
   const highlightGroup = new THREE.Group();
-  // 先用 route 再 point，避免路线遮住点阵
-  scene.add(routeGroup, pointGroup, pieceGroup, highlightGroup);
+  scene.add(pointGroup, routeGroup, frontPointGroup, pieceGroup, highlightGroup);
+
+  // 每帧绘制顺序：路线 → 点阵 → 重复点阵 → 小球 → 高亮
+  routeGroup.renderOrder = 0;
+  pointGroup.renderOrder = 1;
+  frontPointGroup.renderOrder = 2;
+  pieceGroup.renderOrder = 3;
+  highlightGroup.renderOrder = 4;
 
   state.scene = scene;
   state.camera = camera;
@@ -121,6 +129,7 @@ function setupRenderer() {
   state.pointGroup = pointGroup;
   state.pieceGroup = pieceGroup;
   state.routeGroup = routeGroup;
+  state.frontPointGroup = frontPointGroup;
   state.highlightGroup = highlightGroup;
 
   window.addEventListener("resize", onResize);
@@ -247,6 +256,7 @@ function renderBoard(board) {
   clearGroup(state.pointGroup);
   clearGroup(state.pieceGroup);
   clearGroup(state.routeGroup);
+  clearGroup(state.frontPointGroup);
   clearGroup(state.highlightGroup);
 
   rebuildRoutes(board.routes || []);
@@ -263,6 +273,14 @@ function renderBoard(board) {
     const player = Number(playerStr);
     const color = PLAYER_COLORS[player] || 0xffffff;
     state.pointGroup.add(buildBasePointCloud(list, color));
+  });
+
+  // 在小球之前重复绘制一次点阵，确保点不被路线遮挡
+  state.frontPointGroup.add(buildPointCloud(board.points || [], board.pieces, baseKeys));
+  Object.entries(bases).forEach(([playerStr, list]) => {
+    const player = Number(playerStr);
+    const color = PLAYER_COLORS[player] || 0xffffff;
+    state.frontPointGroup.add(buildBasePointCloud(list, color));
   });
 
   Object.entries(board.pieces || {}).forEach(([key, player]) => {
