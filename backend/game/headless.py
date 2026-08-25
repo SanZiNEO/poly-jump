@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from .ai import RandomAI
+from .ai import GraphDistanceAI
 from .config_loader import load_config
 from .game_state import GameState
 from .serializers import path_to_lists, state_to_dict
@@ -68,7 +68,7 @@ def main() -> int:
 
     _print_state_summary(state)
 
-    ai = RandomAI()
+    ai = GraphDistanceAI()
     for step in range(args.moves):
         if state.winner is not None:
             break
@@ -77,7 +77,7 @@ def main() -> int:
             print("当前玩家无合法走法，已跳过/终止")
             break
 
-        move = ai.select_move(legal)
+        move = ai.select_move(state.board, state.current_player, legal)
         ok = state.perform_move(move)
         if not ok:
             print(f"非法走法，终止: {move}")

@@ -1,15 +1,12 @@
-"""AI 选择器基础测试。"""
+"""纯距离 AI 基础测试。"""
 
 from __future__ import annotations
 
 from backend.game.ai import (
-    GraphProgressAI,
-    GreedyAI,
-    ProgressAI,
-    RandomAI,
-    ScoringAwareAI,
+    ChebyshevDistanceAI,
+    EuclideanDistanceAI,
+    GraphDistanceAI,
 )
-from backend.game.config import ScoringConfig
 from backend.game.board import Board
 from backend.game.config import PolyJumpConfig
 
@@ -23,67 +20,34 @@ def make_board() -> Board:
     return board
 
 
-def test_random_ai_returns_legal_path():
-    paths = [[(0, 0, 0), (1, 0, 0)]]
-    assert RandomAI().select_move(paths) in paths
-
-
-def test_greedy_ai_picks_closer_to_target():
-    board = make_board()
-    paths = [
-        [(0, 0, 0), (1, 0, 0)],
-        [(0, 0, 0), (0, 1, 0)],
+def sample_paths():
+    return [
+        [(0, 0, 0), (1, 0, 0)],   # 向目标区前进
+        [(0, 0, 0), (0, 1, 0)],   # 偏离目标区
     ]
-    chosen = GreedyAI().select_move(board, 1, paths)
+
+
+def test_euclidean_ai_picks_closer_to_target():
+    board = make_board()
+    chosen = EuclideanDistanceAI().select_move(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
-def test_progress_ai_avoids_backward_jump():
+def test_chebyshev_ai_picks_closer_to_target():
     board = make_board()
-    paths = [
-        [(0, 0, 0), (1, 0, 0)],   # 前进
-        [(0, 0, 0), (0, 0, -1)],  # 倒跳
-    ]
-    chosen = ProgressAI().select_move(board, 1, paths)
+    chosen = ChebyshevDistanceAI().select_move(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
-def test_progress_ai_prefers_longer_chain_forward():
+def test_graph_distance_ai_picks_forward():
     board = make_board()
-    board.set_piece((2, 0, 0), 2)  # 垫脚石
-    paths = [
-        [(0, 0, 0), (1, 0, 0)],                # 普通前进 1 格
-        [(0, 0, 0), (4, 0, 0)],                # 连跳，如果合法
-    ]
-    # 简单验证：连跳路径评分不低于普通前进
-    ai = ProgressAI()
-    assert ai._count_captures(board, [(0, 0, 0), (4, 0, 0)], [(1, 0, 0)], 1) == 1
-
-
-def test_graph_progress_ai_picks_forward():
-    board = make_board()
-    paths = [
-        [(0, 0, 0), (1, 0, 0)],
-        [(0, 0, 0), (0, 1, 0)],
-    ]
-    chosen = GraphProgressAI().select_move(board, 1, paths)
+    chosen = GraphDistanceAI().select_move(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
-def test_scoring_aware_ai_prefers_target_zone():
-    cfg = PolyJumpConfig(
-        board_size=(9, 9, 9),
-        players=2,
-        direction_set=[6],
-        scoring=ScoringConfig(enabled=True, target_zone_points=20),
-    )
-    board = Board(cfg, setup=False)
-    board.player_targets = {1: {(5, 0, 0)}}
-    board.set_piece((0, 0, 0), 1)
-
-    paths = [
-        [(0, 0, 0), (1, 0, 0)],
-        [(0, 0, 0), (5, 0, 0)],
-    ]
-    chosen = ScoringAwareAI().select_move(board, 1, paths)
-    assert chosen == [(0, 0, 0), (5, 0, 0)]
+def test_graph_distance_map():
+    board = make_board()
+    directions = [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)]
+    dist = GraphDistanceAI._distance_map(board, {(5, 0, 0)}, directions)
+    assert dist.get((0, 0, 0)) == 5
+    assert dist.get((5, 0, 0)) == 0

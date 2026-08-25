@@ -1,5 +1,7 @@
 // 主菜单：收集表单配置 -> POST /api/game/new -> 进入游戏页
-import { applyLanguage, getCurrentLang } from "./i18n.js";
+import { applyLanguage, getCurrentLang, translations } from "./i18n.js";
+
+const AI_TYPE_OPTIONS = ["distance_graph", "distance_euclidean", "distance_chebyshev"];
 
 window.__polyJump = { gameId: null, state: null };
 
@@ -31,6 +33,29 @@ function selectedMenuAIPlayers() {
   ).map((el) => parseInt(el.dataset.aiPlayer, 10));
 }
 
+function selectedMenuAITypes() {
+  const map = {};
+  document.querySelectorAll("#ai-player-menu select.ai-type-select").forEach((sel) => {
+    map[parseInt(sel.dataset.aiPlayer, 10)] = sel.value;
+  });
+  return map;
+}
+
+function createAiTypeSelect(player) {
+  const select = document.createElement("select");
+  select.className = "ai-type-select";
+  select.dataset.aiPlayer = String(player);
+  const lang = getCurrentLang();
+  for (const value of AI_TYPE_OPTIONS) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = translations[lang]["ai_" + value] || value;
+    select.appendChild(opt);
+  }
+  select.value = "distance_graph";
+  return select;
+}
+
 function renderAIPlayerMenu() {
   const wrap = document.getElementById("ai-player-menu");
   if (!wrap) return;
@@ -38,8 +63,10 @@ function renderAIPlayerMenu() {
   const count = parseInt(document.getElementById("players").value, 10);
 
   for (let i = 1; i <= count; i++) {
+    const row = document.createElement("div");
+    row.className = "switch-row";
     const label = document.createElement("label");
-    label.className = "switch-row";
+    label.className = "ai-player-label";
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.dataset.aiPlayer = String(i);
@@ -47,7 +74,9 @@ function renderAIPlayerMenu() {
     span.textContent = `P${i} AI`;
     label.appendChild(cb);
     label.appendChild(span);
-    wrap.appendChild(label);
+    row.appendChild(label);
+    row.appendChild(createAiTypeSelect(i));
+    wrap.appendChild(row);
   }
 }
 
@@ -275,6 +304,7 @@ async function startGame() {
     window.__polyJump.gameId = data.game_id;
     window.__polyJump.state = data.state;
     window.__polyJump.aiPlayers = selectedMenuAIPlayers();
+    window.__polyJump.aiTypes = selectedMenuAITypes();
 
     document.getElementById("menu-page").classList.add("hidden");
     document.getElementById("game-page").classList.remove("hidden");

@@ -5,21 +5,15 @@ PolyJump 本身是游戏，不包含 AI 训练逻辑。
 
 ## 当前 AI
 
-- ScoringAwareAI（默认）
-  - 读取当前对局 ScoringConfig
-  - 吃子分、进入目标区分、连跳计分上限都按配置计算
-  - 带图距离进步与回跳惩罚
-- GraphProgressAI
-  - 用真实图距离（BFS）评估抽象几何下的前进收益
-  - 连跳奖励
-  - 吃子奖励
-  - 回跳惩罚
-- ProgressAI
-  - 连跳奖励 + 吃子奖励 + 回跳惩罚（使用曼哈顿距离）
-- GreedyAI
-  - 简单贪心
-- RandomAI
-  - 随机选择一条合法路径
+游戏内置三种纯距离导向 AI（由 `ai_research` 基准评测筛选）：
+
+- GraphDistanceAI（默认）
+  - 使用真实图距离 BFS 评估到目标区的最少步数
+  - 只以“把棋子送进目标区”为目标，不读取计分
+- EuclideanDistanceAI
+  - 使用三维欧氏距离选择靠近目标区的走法
+- ChebyshevDistanceAI
+  - 使用切比雪夫距离选择靠近目标区的走法
 
 ## AI 玩家模式
 
@@ -57,8 +51,7 @@ temp_scores
 
 ## 后续可扩展（不内置）
 
-- GreedyAI
-- MCTS
+- MCTS / UCT
 - 小神经网络
 - RL / 自博弈
 

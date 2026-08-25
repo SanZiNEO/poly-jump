@@ -1,37 +1,27 @@
-"""可选小 AI：RandomAI、GreedyAI、ProgressAI。
+"""游戏内 AI：纯距离导向的三种强 AI。
 
-不包含训练逻辑，只作为游戏内的小棋手。
+不读取计分配置，只以“把棋子送进目标区”为唯一目标。
+由基准评测筛选出的三种 AI：
+- EuclideanDistanceAI：欧氏距离
+- ChebyshevDistanceAI：切比雪夫距离
+- GraphDistanceAI：真实图距离 BFS
 """
 
 from __future__ import annotations
 
-import random
+import math
 from collections import deque
 from typing import Dict, List, Optional, Sequence
 
 from .board import Board
 from .directions import resolve_direction_set
-from .moves.segment import (
-    is_jump_segment,
-    is_two_step_segment,
-    jump_mid,
-    two_step_mid,
-)
 
 
-def _manhattan(a: Sequence[int], b: Sequence[int]) -> int:
-    return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
+class _DistanceAI:
+    """按距离度量选择让棋子更接近目标区的走法。"""
 
-
-class RandomAI:
-    def select_move(self, legal_paths: List[Sequence[Sequence[int]]]) -> Optional[list]:
-        if not legal_paths:
-            return None
-        return random.choice(list(legal_paths))
-
-
-class GreedyAI:
-    """简单贪心 AI：选择让单个棋子更接近目标区的走法。"""
+    def _distance(self, a: Sequence[int], b: Sequence[int]) -> float:
+        raise NotImplementedError
 
     def select_move(
         self,
@@ -44,108 +34,35 @@ class GreedyAI:
 
         target = board.player_targets.get(player, set())
         if not target:
-            return random.choice(list(legal_paths))
-
-        def gain(path: Sequence[Sequence[int]]) -> int:
-            start = path[0]
-            end = path[-1]
-            before = min(_manhattan(start, t) for t in target)
-            after = min(_manhattan(end, t) for t in target)
-            return before - after
-
-        return max(legal_paths, key=gain)
-
-
-class ProgressAI:
-    """带连跳奖励和回跳惩罚的简单 AI。
-
-    评分：
-        + 向目标区前进
-        + 连跳长度奖励
-        + 吃子奖励
-        - 倒跳惩罚
-    """
-
-    def __init__(
-        self,
-        chain_bonus: float = 1.5,
-        capture_bonus: float = 3.0,
-        backward_penalty: float = 2.0,
-    ):
-        self.chain_bonus = chain_bonus
-        self.capture_bonus = capture_bonus
-        self.backward_penalty = backward_penalty
-
-    def select_move(
-        self,
-        board: Board,
-        player: int,
-        legal_paths: List[Sequence[Sequence[int]]],
-    ) -> Optional[list]:
-        if not legal_paths:
-            return None
-
-        target = board.player_targets.get(player, set())
-        if not target:
-            return random.choice(list(legal_paths))
-
-        directions = resolve_direction_set(
-            board.config.direction_set, board.config.custom_vectors
-        )
+            return legal_paths[0]
 
         def score(path: Sequence[Sequence[int]]) -> float:
             start = path[0]
             end = path[-1]
-            before = min(_manhattan(start, t) for t in target)
-            after = min(_manhattan(end, t) for t in target)
-            progress = before - after
+            before = min(self._distance(start, t) for t in target)
+            after = min(self._distance(end, t) for t in target)
+            return float(before - after)
 
-            chain = max(0, len(path) - 2) * self.chain_bonus
-            captures = self._count_captures(board, path, directions, player)
-            capture_gain = captures * self.capture_bonus
-
-            if progress < 0:
-                # 倒跳：重罚
-                return progress + chain + capture_gain - abs(progress) * self.backward_penalty
-
-            return progress + chain + capture_gain
-
-        return max(legal_paths, key=score)
-
-    @staticmethod
-    def _count_captures(
-        board: Board,
-        path: Sequence[Sequence[int]],
-        directions,
-        player: int,
-    ) -> int:
-        count = 0
-        for i in range(len(path) - 1):
-            src = path[i]
-            dst = path[i + 1]
-            if is_jump_segment(src, dst, directions):
-                mid = jump_mid(src, dst)
-            elif is_two_step_segment(src, dst, directions):
-                mid = two_step_mid(src, dst)
-            else:
-                continue
-            owner = board.get_piece(mid)
-            if owner is not None and owner != player:
-                if (
-                    not board.config.capture.capture_in_base
-                    and mid in board.player_bases.get(owner, set())
-                ):
-                    continue
-                count += 1
-        return count
+        # 同分优先短路径；仍同分取 max 第一个（确定性）
+        return max(legal_paths, key=lambda p: (score(p), -len(p)))
 
 
-class GraphProgressAI(ProgressAI):
-    """使用真实图距离（BFS）的贪心 AI。
+class EuclideanDistanceAI(_DistanceAI):
+    """欧氏距离 AI。"""
 
-    在 B/C/D 等抽象几何下，坐标曼哈顿距离会失真，
-    改用“沿该几何实际移动方向到达目标区的步数”作为距离。
-    """
+    def _distance(self, a: Sequence[int], b: Sequence[int]) -> float:
+        return math.sqrt(sum((x - y) ** 2 for x, y in zip(a, b)))
+
+
+class ChebyshevDistanceAI(_DistanceAI):
+    """切比雪夫距离 AI。"""
+
+    def _distance(self, a: Sequence[int], b: Sequence[int]) -> float:
+        return float(max(abs(x - y) for x, y in zip(a, b)))
+
+
+class GraphDistanceAI:
+    """真实图距离 BFS AI：只沿棋盘实际连边计算到目标区的最少步数。"""
 
     def select_move(
         self,
@@ -158,7 +75,7 @@ class GraphProgressAI(ProgressAI):
 
         target = board.player_targets.get(player, set())
         if not target:
-            return random.choice(list(legal_paths))
+            return legal_paths[0]
 
         directions = resolve_direction_set(
             board.config.direction_set, board.config.custom_vectors
@@ -171,19 +88,10 @@ class GraphProgressAI(ProgressAI):
             before = dist.get(tuple(start))
             after = dist.get(tuple(end))
             if before is None or after is None:
-                progress = 0.0
-            else:
-                progress = float(before - after)
+                return 0.0
+            return float(before - after)
 
-            chain = max(0, len(path) - 2) * self.chain_bonus
-            captures = self._count_captures(board, path, directions, player)
-            capture_gain = captures * self.capture_bonus
-
-            if progress < 0:
-                return progress + chain + capture_gain - abs(progress) * self.backward_penalty
-            return progress + chain + capture_gain
-
-        return max(legal_paths, key=score)
+        return max(legal_paths, key=lambda p: (score(p), -len(p)))
 
     @staticmethod
     def _distance_map(
@@ -213,107 +121,8 @@ class GraphProgressAI(ProgressAI):
         return dist
 
 
-class ScoringAwareAI(GraphProgressAI):
-    """读取当前对局 ScoringConfig 的 AI。
-
-    评分：
-    = 图距离进步
-    + 吃子分（按配置）
-    + 进入目标区分（按配置）
-    + 连跳计分（受 chain_max_scoring 限制）
-    """
-
-    def select_move(
-        self,
-        board: Board,
-        player: int,
-        legal_paths: List[Sequence[Sequence[int]]],
-    ) -> Optional[list]:
-        if not legal_paths:
-            return None
-
-        scoring = board.config.scoring
-        target = board.player_targets.get(player, set())
-
-        directions = resolve_direction_set(
-            board.config.direction_set, board.config.custom_vectors
-        )
-        dist = self._distance_map(board, target, directions) if target else {}
-
-        target_weight = 5.0
-        path_penalty = 2.0
-        enemy_base_penalty = 100.0
-
-        def victory_bonus(path: Sequence[Sequence[int]]) -> float:
-            start = path[0]
-            end = path[-1]
-            new_pieces = [
-                p for p in board.pieces_for_player(player) if tuple(p) != tuple(start)
-            ]
-            new_pieces.append(end)
-            if all(tuple(p) in target for p in new_pieces):
-                return float(scoring.first_finish_reward)
-            return 0.0
-
-        def score(path: Sequence[Sequence[int]]) -> float:
-            start = path[0]
-            end = path[-1]
-            before = dist.get(tuple(start))
-            after = dist.get(tuple(end))
-            progress = 0.0
-            if before is not None and after is not None:
-                progress = float(before - after)
-
-            chain_jumps = max(0, len(path) - 1) if len(path) > 2 else 0
-            if scoring.chain_max_scoring > 0:
-                chain_jumps = min(chain_jumps, scoring.chain_max_scoring)
-            chain_score = chain_jumps * scoring.chain_jump_points
-
-            captures = self._count_captures(board, path, directions, player)
-            capture_score = captures * scoring.capture_points
-
-            target_score = 0.0
-            if (
-                target
-                and tuple(start) not in target
-                and tuple(end) in target
-            ):
-                target_score = scoring.target_zone_points * target_weight
-
-            win_score = victory_bonus(path)
-
-            # 路径长度惩罚
-            length_penalty = max(0, len(path) - 2) * path_penalty
-
-            # 无效进入敌基地（最终未停在目标区）
-            base_penalty = 0.0
-            if (
-                target
-                and tuple(end) not in target
-                and any(tuple(p) in target for p in path[1:-1])
-            ):
-                base_penalty = enemy_base_penalty
-
-            if progress < 0:
-                return (
-                    progress
-                    + chain_score
-                    + capture_score
-                    + target_score
-                    + win_score
-                    - abs(progress) * self.backward_penalty
-                    - length_penalty
-                    - base_penalty
-                )
-
-            return (
-                progress
-                + chain_score
-                + capture_score
-                + target_score
-                + win_score
-                - length_penalty
-                - base_penalty
-            )
-
-        return max(legal_paths, key=score)
+__all__ = [
+    "EuclideanDistanceAI",
+    "ChebyshevDistanceAI",
+    "GraphDistanceAI",
+]

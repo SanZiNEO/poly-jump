@@ -514,7 +514,9 @@ async function submitMove(path) {
 
 async function handleAiMove() {
   if (state.replayMode) return;
-  const res = await fetch(`/api/game/${state.gameId}/ai-move`, {
+  const player = state.board && state.board.current_player;
+  const aiType = (state.aiTypes && state.aiTypes[player]) || "distance_graph";
+  const res = await fetch(`/api/game/${state.gameId}/ai-move?ai_type=${encodeURIComponent(aiType)}`, {
     method: "POST",
   });
   const data = await res.json();
@@ -674,6 +676,7 @@ function maybeAutoMove() {
 
 function initAIPlayers() {
   state.aiPlayers = new Set((window.__polyJump && window.__polyJump.aiPlayers) || []);
+  state.aiTypes = (window.__polyJump && window.__polyJump.aiTypes) || {};
   renderAiPlayerControls();
   maybeAutoMove();
 }
