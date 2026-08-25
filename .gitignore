@@ -223,6 +223,10 @@ progress.md
 task_plan.md
 findings.md
 
+# AI research local artifacts
+ai_research/runs/
+ai_research/logs/
+
 # Local example projects downloaded for reference
 example/
 
