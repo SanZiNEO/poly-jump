@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import Optional, Sequence
 
 from backend.game.env import GameEnv
@@ -42,4 +43,6 @@ class GraphBFSAgent(Agent):
                 return 0.0
             return float(before - after)
 
-        return max(legal, key=lambda p: (gain(p), -len(p)))
+        best_score = max((gain(p), -len(p)) for p in legal)
+        tied = [p for p in legal if (gain(p), -len(p)) == best_score]
+        return random.choice(tied)

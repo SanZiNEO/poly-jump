@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import math
+import random
 from collections import deque
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
@@ -118,4 +119,6 @@ class DistanceAgent(Agent):
             after = min(self.distance(end, t) for t in targets)
             return float(before - after)
 
-        return max(legal, key=lambda p: (gain(p), -len(p)))
+        best_score = max((gain(p), -len(p)) for p in legal)
+        tied = [p for p in legal if (gain(p), -len(p)) == best_score]
+        return random.choice(tied)
