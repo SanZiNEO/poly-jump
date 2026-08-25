@@ -111,7 +111,8 @@ function setupRenderer() {
   const pieceGroup = new THREE.Group();
   const routeGroup = new THREE.Group();
   const highlightGroup = new THREE.Group();
-  scene.add(pointGroup, pieceGroup, routeGroup, highlightGroup);
+  // 先用 route 再 point，避免路线遮住点阵
+  scene.add(routeGroup, pointGroup, pieceGroup, highlightGroup);
 
   state.scene = scene;
   state.camera = camera;
