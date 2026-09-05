@@ -1,104 +1,153 @@
 # PolyJump
 
-A configurable 3D jump-chess game framework with multiple geometries, rule modes, scoring, replay, and clean programming interfaces.
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 
-> 中文版见 [README.md](./README.md).
+A configurable 3D jump-chess framework.
 
-## Project Overview
+It includes multiple geometry models, rule configuration, a Three.js frontend, a `GameEnv` interface for external programs, and an AI benchmark directory.
 
-PolyJump is a game, not an AI training framework. It provides:
+## Demo
 
-- Multiple geometry models
-- Multiple rule modes
-- Configurable game rules
-- Clean backend/game environment interfaces
-- Replay / move history
-- Optional external AI integration
+### Geometry Models
 
-## Geometry Models
+Model A · 3 players
 
-| Model | Coordinates | Directions | Players |
-|---|---|---|---|
-| A | Standard XYZ cube | 6/8/12/14/18/20/26 + custom | 2/3/4/6/8 |
-| B | L1 even sublattice | fixed 12 | 2/3/4/6 |
-| C | L1 full integer points | fixed 20 | 2/3/4/6 |
-| D | External pyramid full points | fixed 14 | 2/3/4/6 |
-| A-ext | External pyramid | configurable | 2/3/4/6 |
-| B-ext | External pyramid even sublattice | fixed 12 | 2/3/4/6 |
-| C-ext | External pyramid full points | fixed 20 | 2/3/4/6 |
+![Model A, 3 players](assets/gifs/A-3P.gif)
 
-## Game Modes
+Model B · 3 players
 
-| Mode | Goal | Capture |
-|---|---|---|
-| Chinese Checkers | Move all pieces to opponent target area | none |
-| Draughts / Western | Capture all opponent pieces | remove captured |
-| Mixed | Transport to target, with displacement captures | return to base |
+![Model B, 3 players](assets/gifs/B-3P.gif)
 
-## Scoring
+Model C · 3 players
 
-| Rule | Default Points |
+![Model C, 3 players](assets/gifs/C-3P.gif)
+
+### Multiplayer
+
+Model A · 8 players
+
+![Model A, 8 players](assets/gifs/A-8P.gif)
+
+## Features
+
+| Area | Content |
 |---|---|
-| Each chain jump | +1 temporary |
-| Capture | +2 |
-| Enter target zone | +1 |
-| Win bonus | +10 |
-| Surviving pieces in capture mode | +1 each |
+| Geometry models | A / B / C / D + A-ext / B-ext / C-ext, 7 total |
+| Directions | 6 / 8 / 12 / 14 / 18 / 20 / 26, auto-matched or custom |
+| Players | 2 / 3 / 4 / 6 / 8 |
+| Movement | step, jump, chain jump, two-step hop, free stop, forced all |
+| Game modes | Chinese checkers, Draughts (capture), Mixed |
+| Scoring | chain jump, capture, target zone, win bonus — configurable |
+| Frontend | HTML + Three.js, 3D rendering, legal-path highlight, AI autoplay, replay, i18n |
+| Backend | Python + FastAPI, HTTP API and headless GameEnv |
+| AI research | `ai_research/` benchmark with batch matches, metrics, timestamped archives |
 
-## One-Click Start
+## Requirements
 
-```bash
+- Python 3.11+
+- Install dependencies: `pip install -r requirements.txt`
+- Frontend has no separate build; it is served by the backend
+
+## Quick Start
+
+### Install dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+### Launch the game
+
+```powershell
 python run.py
 ```
 
-Starts the backend and opens the browser automatically.
+Starts the backend and opens the browser.
 
-## Interfaces
-
-### HTTP API
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/api/config` | Default config |
-| GET | `/api/direction-sets` | Direction rules |
-| POST | `/api/game/new` | Create game |
-| GET | `/api/game/{id}` | Current state |
-| GET | `/api/game/{id}/legal-moves` | Legal paths |
-| POST | `/api/game/{id}/move` | Execute move |
-| POST | `/api/game/{id}/ai-move` | Random AI move |
-| GET | `/api/game/{id}/history` | Replay / history |
-
-### Python GameEnv
-
-```python
-from backend.game.env import GameEnv
-
-env = GameEnv(config)
-result = env.reset()
-actions = env.action_space()
-result = env.step(actions[0]["id"])
-```
-
-### Headless
+### Run headless
 
 ```powershell
-python -m backend.game.headless --config configs\a_2p_6dir.json --moves 10
+python -m backend.game.headless --config configs/a_2p_6dir.json --moves 10
+```
+
+### Run AI benchmark
+
+From the project root, using the project virtual environment:
+
+```powershell
+.poly_jump\Scripts\python.exe -m ai_research.runner --games 10 --radius 6
+```
+
+By default this evaluates 5 agents: `random` / `manhattan` / `euclidean` / `chebyshev` / `graph_bfs`. Results are written to `ai_research/runs/<timestamp>/`.
+
+## AI / Research Interface
+
+External programs can drive the game through the Python interface:
+
+```python
+from backend.game.config import PolyJumpConfig
+from backend.game.env import GameEnv
+
+config = PolyJumpConfig(geometry="B", b_radius=6, players=2)
+env = GameEnv(config)
+obs = env.reset()
+
+while not obs.done:
+    actions = obs.legal_actions
+    # Plug in your own agent here: MCTS / RL / LLM agent, etc.
+    action = actions[0]
+    obs = env.step(action)
+```
+
+The `ai_research/` directory provides a frontend-free batch benchmark:
+
+- 5 random/distance baselines
+- Full per-game records
+- Win rate, average moves, target-zone metrics
+- JSON / CSV / Markdown summaries
+
+## Project Structure
+
+```text
+backend/
+  app.py                 # FastAPI entry
+  game/
+    config.py            # Configuration
+    geometry/            # Geometry models
+    moves/               # Move generation / validation
+    rules/               # Rule application / capture / winner
+    env.py               # GameEnv interface
+    scoring.py           # Scoring
+    headless.py          # Pure-backend runner
+frontend/                # HTML + Three.js frontend
+ai_research/             # AI benchmark
+  agents/                # Baseline agents
+  runner.py              # Batch benchmark entry
+  metrics.py             # Metric aggregation
+configs/                 # Example configs
+docs/                    # Design documentation
+tests/                   # pytest tests
 ```
 
 ## Documentation
 
-- Current docs index: [docs/README.md](./docs/README.md)
-- Chinese README: [README.md](./README.md)
+| Document | Content |
+|---|---|
+| [Overview](docs/01-overview.md) | Project positioning and structure |
+| [Geometry Models](docs/02-geometry-models.md) | 7 geometry models |
+| [Game Rules](docs/03-game-rules.md) | Rules |
+| [Configuration](docs/04-configuration.md) | Config reference |
+| [Interfaces](docs/05-interfaces.md) | HTTP / GameEnv / headless interfaces |
+| [Frontend](docs/06-frontend.md) | Frontend features |
+| [AI / Research](docs/07-ai-and-research.md) | AI and research interface |
+| [References](docs/08-references.md) | References |
 
-## Hugging Face Deployment
+## Current Status
 
-The repository includes a Dockerfile. To deploy as an HF Space:
-
-1. Create a Space with SDK **Docker**
-2. Push this repository to the Space
-3. The app starts at `http://0.0.0.0:7860`
-
-The Space includes only the game, no AI training content.
+- Game frontend, backend API, and 7 geometry models are implemented
+- AI benchmark currently includes random and 4 distance baselines
+- Possible extensions: MCTS / UCT, RL / self-play, LLM agent integration
 
 ## License
 

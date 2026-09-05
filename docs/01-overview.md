@@ -26,7 +26,6 @@ PolyJump 是一个可配置的三维跳棋游戏框架。
 - 前端中英文切换
 - 配置文件驱动
 - 纯后端 headless 运行
-- Hugging Face Docker 部署支持
 
 ## 仓库结构
 
