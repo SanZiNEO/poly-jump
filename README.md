@@ -7,6 +7,10 @@
 
 包含多种几何模型、规则配置、Three.js 前端界面，以及供外部程序使用的 `GameEnv` 接口和 AI 基准评测目录。
 
+## 在线体验
+
+👉 [PolyJump 在线 Demo](https://sanzineo.github.io/polyjump/index.html)
+
 ## 演示
 
 ### 几何模型

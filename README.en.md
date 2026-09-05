@@ -7,6 +7,10 @@ A configurable 3D jump-chess framework.
 
 It includes multiple geometry models, rule configuration, a Three.js frontend, a `GameEnv` interface for external programs, and an AI benchmark directory.
 
+## Online Demo
+
+👉 [PolyJump Online Demo](https://sanzineo.github.io/polyjump/index.html)
+
 ## Demo
 
 ### Geometry Models
