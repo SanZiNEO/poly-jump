@@ -14,6 +14,7 @@
 | [08-references.md](./08-references.md) | 参考资料 |
 | [09-path-metrics.md](./09-path-metrics.md) | 路径度量（Action / Step） |
 | [10-semantics.md](./10-semantics.md) | 其他语义说明 |
+| [11-cross-geometry-discovery.md](./11-cross-geometry-discovery.md) | 跨几何路径策略初步发现 |
 
 早期设计文档已归档到：
 

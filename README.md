@@ -149,6 +149,7 @@ tests/                   # pytest 测试
 | [参考资料](docs/08-references.md) | 参考 |
 | [路径度量](docs/09-path-metrics.md) | Action / Step 数据模型 |
 | [语义说明](docs/10-semantics.md) | 规则/计分/回放等语义 |
+| [跨几何发现](docs/11-cross-geometry-discovery.md) | 跨几何路径策略初步发现 |
 
 ## 当前状态
 
