@@ -49,6 +49,28 @@ temp_scores
 
 外部程序可以用积分作为 reward。
 
+## 路径度量
+
+`action_space()` 中每个 action 还包含：
+
+```text
+step_count
+straight_distance
+path_distance
+step_distances
+```
+
+`state_dict()` / `history_to_dict()` 中提供 `path_stats` 汇总，包括：
+
+```text
+action_count
+total_steps
+total_straight_distance
+total_path_distance
+```
+
+详细定义见 [09-path-metrics.md](./09-path-metrics.md)。
+
 ## 后续可扩展（不内置）
 
 - MCTS / UCT

@@ -14,6 +14,7 @@ from collections import defaultdict
 from typing import Dict, List, Sequence, Set, Tuple
 
 from backend.game.env import GameEnv
+from backend.game.path_metrics import path_distance, straight_distance
 from .agents.base import Point, get_targets, tuple_point
 
 AgentSlug = str
@@ -32,16 +33,26 @@ def analyze_state(
         entered = 0
         left = 0
         through = 0
-        path_lengths: List[int] = []
+        actions = 0
+        step_count_total = 0
+        straight_total = 0.0
+        path_total = 0.0
         for move in history:
             if move.get("player") != player:
                 continue
             path = move.get("path", [])
             if len(path) < 2:
                 continue
+            actions += 1
             start = tuple_point(path[0])
             end = tuple_point(path[-1])
-            path_lengths.append(len(path))
+            step_count_total += int(move.get("step_count", 0)) or max(0, len(path) - 1)
+            straight_total += float(move.get("straight_distance", 0.0))
+            path_total += float(move.get("path_distance", 0.0))
+            if not move.get("straight_distance"):
+                straight_total += straight_distance(path)
+            if not move.get("path_distance"):
+                path_total += path_distance(path)
             if start not in target and end in target:
                 entered += 1
             elif start in target and end not in target:
@@ -60,13 +71,14 @@ def analyze_state(
                 final_inside += 1
 
         players_meta[player] = {
+            "actions": actions,
             "entered": entered,
             "left": left,
             "through": through,
             "final_inside": final_inside,
-            "avg_path_length": round(
-                sum(path_lengths) / len(path_lengths), 2
-            ) if path_lengths else 0.0,
+            "step_count": step_count_total,
+            "straight_distance": round(straight_total, 2),
+            "path_distance": round(path_total, 2),
         }
 
     return {
@@ -86,7 +98,7 @@ def analyze_match(
     result["game_id"] = state.get("game_id")
     result["current_player"] = state.get("current_player")
     result["round"] = state.get("round")
-    result["step_count"] = state.get("step_count")
+    result["action_count"] = state.get("action_count") or state.get("step_count")
     result["history"] = state.get("history", [])
     return result
 
@@ -109,7 +121,10 @@ def aggregate_matches(
         "left": 0,
         "through": 0,
         "final_inside_total": 0,
-        "path_lengths": [],
+        "action_count_total": 0,
+        "step_count_total": 0,
+        "straight_total": 0.0,
+        "path_total": 0.0,
         "moves_when_win": [],
         "moves_all": [],
     })
@@ -141,7 +156,10 @@ def aggregate_matches(
             meta["left"] += pm.get("left", 0)
             meta["through"] += pm.get("through", 0)
             meta["final_inside_total"] += pm.get("final_inside", 0)
-            meta["path_lengths"].append(pm.get("avg_path_length", 0.0))
+            meta["action_count_total"] += pm.get("actions", 0)
+            meta["step_count_total"] += pm.get("step_count", 0)
+            meta["straight_total"] += pm.get("straight_distance", 0.0)
+            meta["path_total"] += pm.get("path_distance", 0.0)
 
         if len(agents) == 2:
             pair = tuple(sorted(agents.items()))  # [(1,slug),(2,slug)]
@@ -177,10 +195,17 @@ def aggregate_matches(
             "avg_final_inside": round(m["final_inside_total"] / games, 2) if games else 0.0,
             "avg_left_per_game": round(m["left"] / games, 2) if games else 0.0,
             "avg_through_per_game": round(m["through"] / games, 2) if games else 0.0,
+            "avg_action_count": round(m["action_count_total"] / games, 2) if games else 0.0,
+            "avg_step_count": round(m["step_count_total"] / games, 2) if games else 0.0,
+            "avg_straight_distance": round(m["straight_total"] / games, 2) if games else 0.0,
+            "avg_path_distance": round(m["path_total"] / games, 2) if games else 0.0,
+            "avg_step_per_action": (
+                round(m["step_count_total"] / m["action_count_total"], 2)
+                if m["action_count_total"] else 0.0
+            ),
             "total_entered": m["entered"],
             "total_left": m["left"],
             "total_through": m["through"],
-            "avg_path_length": round(sum(m["path_lengths"]) / games, 2) if games else 0.0,
         }
 
     for (a, b), pp in per_pair.items():

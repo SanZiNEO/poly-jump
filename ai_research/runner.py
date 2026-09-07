@@ -169,7 +169,7 @@ def play_one_game(
         obs = env.observe()
         if obs.done:
             break
-        if obs.step_count >= max_steps:
+        if obs.action_count >= max_steps:
             break
 
         player = obs.current_player
@@ -193,13 +193,13 @@ def build_summary_markdown(summary: dict, agents_info: Dict[str, str]) -> str:
     lines = ["# PolyJump AI 基准评测结果", ""]
     lines.append("## 各 AI 指标")
     lines.append("")
-    lines.append("| AI | 胜率 | 场次 | 平均步数 | 平均终局进目标子数 | 平均离开目标区次数 | 平均穿过目标区次数 | 平均路径长度 |")
+    lines.append("| AI | 胜率 | 场次 | 平均行动数 | 平均步数 | 平均直线距离 | 平均路径距离 | 平均每行动步数 |")
     lines.append("|---|---|---|---|---|---|---|---|")
     for slug, row in summary["agents"].items():
         lines.append(
             f"| {agents_info.get(slug, slug)} | {row['win_rate']:.2%} | {row['games']} "
-            f"| {row['avg_moves']} | {row['avg_final_inside']} "
-            f"| {row['avg_left_per_game']} | {row['avg_through_per_game']} | {row['avg_path_length']} |"
+            f"| {row['avg_moves']} | {row['avg_step_count']} "
+            f"| {row['avg_straight_distance']} | {row['avg_path_distance']} | {row['avg_step_per_action']} |"
         )
     lines.append("")
     if summary["pairs"]:
@@ -352,14 +352,14 @@ def main() -> int:
     with (run_dir / "curves.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
-            "agent", "win_rate", "games", "avg_moves", "avg_final_inside",
-            "avg_left_per_game", "avg_through_per_game", "avg_path_length",
+            "agent", "win_rate", "games", "avg_moves", "avg_step_count",
+            "avg_straight_distance", "avg_path_distance", "avg_step_per_action",
         ])
         for slug, row in summary["agents"].items():
             writer.writerow([
                 slug, row["win_rate"], row["games"], row["avg_moves"],
-                row["avg_final_inside"], row["avg_left_per_game"],
-                row["avg_through_per_game"], row["avg_path_length"],
+                row["avg_step_count"], row["avg_straight_distance"],
+                row["avg_path_distance"], row["avg_step_per_action"],
             ])
 
     summary_text = build_summary_markdown(summary, agents_info)

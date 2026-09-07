@@ -19,6 +19,7 @@ from typing import List, Optional
 from .actions import action_index
 from .config import PolyJumpConfig
 from .game_state import GameState
+from .path_metrics import summarize_actions
 from .serializers import state_to_dict
 
 
@@ -34,7 +35,10 @@ class StepResult:
     scores: dict
     temp_scores: dict
     round: int
-    step_count: int
+    action_count: int
+    total_steps: int
+    total_straight_distance: float
+    total_path_distance: float
 
 
 class GameEnv:
@@ -69,6 +73,7 @@ class GameEnv:
 
     def observe(self) -> StepResult:
         paths = self.state.legal_moves()
+        summary = summarize_actions(self.state.move_history)
         return StepResult(
             game_id=self.state.id,
             current_player=self.state.current_player,
@@ -80,7 +85,10 @@ class GameEnv:
             scores=dict(self.state.scores),
             temp_scores=dict(self.state.temp_scores),
             round=self.state.round,
-            step_count=self.state.step_count,
+            action_count=self.state.action_count,
+            total_steps=int(summary["total_steps"]),
+            total_straight_distance=float(summary["total_straight_distance"]),
+            total_path_distance=float(summary["total_path_distance"]),
         )
 
     def state_dict(self) -> dict:

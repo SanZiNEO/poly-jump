@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Sequence, Tuple
 
+from .path_metrics import summarize_actions
+
 
 def point_key(pos: Tuple[int, int, int]) -> str:
     return f"{pos[0]},{pos[1]},{pos[2]}"
@@ -33,7 +35,9 @@ def history_to_dict(state: Any) -> Dict[str, Any]:
         "scores": dict(state.scores),
         "temp_scores": dict(state.temp_scores),
         "round": state.round,
+        "action_count": state.action_count,
         "step_count": state.step_count,
+        "path_stats": summarize_actions(state.move_history),
     }
 
 
@@ -51,6 +55,7 @@ def state_to_dict(state: Any) -> Dict[str, Any]:
         "current_player": state.current_player,
         "winner": state.winner,
         "round": state.round,
+        "action_count": state.action_count,
         "step_count": state.step_count,
         "scores": dict(state.scores),
         "temp_scores": dict(state.temp_scores),
@@ -62,5 +67,6 @@ def state_to_dict(state: Any) -> Dict[str, Any]:
             str(player): [list(p) for p in target]
             for player, target in board.player_targets.items()
         },
+        "path_stats": summarize_actions(state.move_history),
         "history": list(state.move_history),
     }

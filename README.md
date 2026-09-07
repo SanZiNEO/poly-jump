@@ -146,6 +146,7 @@ tests/                   # pytest 测试
 | [前端](docs/06-frontend.md) | 前端功能 |
 | [AI / 研究](docs/07-ai-and-research.md) | AI 和研究接口 |
 | [参考资料](docs/08-references.md) | 参考 |
+| [路径度量](docs/09-path-metrics.md) | Action / Step 数据模型 |
 
 ## 当前状态
 

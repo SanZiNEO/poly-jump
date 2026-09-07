@@ -64,7 +64,14 @@ legal_actions
 done
 scores
 temp_scores
+round
+action_count
+total_steps
+total_straight_distance
+total_path_distance
 ```
+
+路径度量的具体定义见 [09-path-metrics.md](./09-path-metrics.md)。
 
 ## 3. Headless
 

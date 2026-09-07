@@ -8,6 +8,7 @@ from typing import List, Optional, Sequence
 from .board import Board
 from .config import PolyJumpConfig
 from .moves import MoveGenerator, MoveValidator
+from .path_metrics import path_metrics
 from .rules import MoveApplier, check_winner
 from .scoring import ScoringEngine
 
@@ -26,8 +27,17 @@ class GameState:
         self.temp_scores: dict = {i: 0 for i in range(1, config.players + 1)}
 
     @property
-    def step_count(self) -> int:
+    def action_count(self) -> int:
+        """已经发生的 action（玩家操作）数量。"""
         return len(self.move_history)
+
+    @property
+    def step_count(self) -> int:
+        """兼容别名：旧字段，意义等同 action_count。
+
+        新代码请使用 action_count，避免与 action 内部的 step 混淆。
+        """
+        return self.action_count
 
     @property
     def round(self) -> int:
@@ -87,6 +97,7 @@ class GameState:
                 self.temp_scores,
             )
 
+        metrics = path_metrics(path_t)
         self.move_history.append(
             {
                 "player": player,
@@ -94,6 +105,10 @@ class GameState:
                 "scoring": assessment,
                 "scores": dict(self.scores),
                 "temp_scores": dict(self.temp_scores),
+                "step_count": metrics["step_count"],
+                "straight_distance": metrics["straight_distance"],
+                "path_distance": metrics["path_distance"],
+                "step_distances": metrics["step_distances"],
             }
         )
         self.snapshots.append(dict(self.board.pieces))
