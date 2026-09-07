@@ -13,6 +13,7 @@
 | [07-ai-and-research.md](./07-ai-and-research.md) | AI/研究接口 |
 | [08-references.md](./08-references.md) | 参考资料 |
 | [09-path-metrics.md](./09-path-metrics.md) | 路径度量（Action / Step） |
+| [10-semantics.md](./10-semantics.md) | 其他语义说明 |
 
 早期设计文档已归档到：
 

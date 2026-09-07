@@ -1,7 +1,7 @@
 // 主菜单：收集表单配置 -> POST /api/game/new -> 进入游戏页
 import { applyLanguage, getCurrentLang, translations } from "./i18n.js";
 
-const AI_TYPE_OPTIONS = ["distance_graph", "distance_euclidean", "distance_chebyshev"];
+const AI_TYPE_OPTIONS = ["graph_bfs", "euclidean", "chebyshev"];
 
 window.__polyJump = { gameId: null, state: null };
 
@@ -52,7 +52,7 @@ function createAiTypeSelect(player) {
     opt.textContent = translations[lang]["ai_" + value] || value;
     select.appendChild(opt);
   }
-  select.value = "distance_graph";
+  select.value = "graph_bfs";
   return select;
 }
 

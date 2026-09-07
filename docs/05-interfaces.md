@@ -16,15 +16,15 @@ python -m uvicorn backend.app:app --reload
 | GET | `/api/game/{id}` | 当前局面 |
 | GET | `/api/game/{id}/legal-actions` | 合法 action 路径 |
 | POST | `/api/game/{id}/action` | 执行 action |
-| POST | `/api/game/{id}/ai-action` | AI 执行一次 action（默认 distance_graph） |
+| POST | `/api/game/{id}/ai-action` | AI 执行一次 action（默认 graph_bfs） |
 | GET | `/api/game/{id}/history` | 棋谱/回放 |
 
 `ai-action` 支持：
 
 ```text
-ai_type=distance_graph       # 图距离 BFS
-ai_type=distance_euclidean   # 欧氏距离
-ai_type=distance_chebyshev   # 切比雪夫距离
+ai_type=graph_bfs            # 图距离 BFS
+ai_type=euclidean            # 欧氏距离
+ai_type=chebyshev            # 切比雪夫距离
 ```
 
 ## 2. Python GameEnv

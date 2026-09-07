@@ -14,9 +14,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from .game.ai import (
-    ChebyshevDistanceAI,
-    EuclideanDistanceAI,
-    GraphDistanceAI,
+    ChebyshevHeuristicAI,
+    EuclideanHeuristicAI,
+    GraphHeuristicAI,
 )
 from .game.config import PolyJumpConfig
 from .game.direction_registry import get_available_sets
@@ -109,15 +109,15 @@ def action(game_id: str, req: ActionRequest):
 
 
 @app.post("/api/game/{game_id}/ai-action")
-def ai_action(game_id: str, ai_type: str = "distance_graph"):
+def ai_action(game_id: str, ai_type: str = "graph_bfs"):
     state = _get_state(game_id)
     paths = state.legal_actions()
-    if ai_type == "distance_euclidean":
-        selected = EuclideanDistanceAI().select_action(state.board, state.current_player, paths)
-    elif ai_type == "distance_chebyshev":
-        selected = ChebyshevDistanceAI().select_action(state.board, state.current_player, paths)
+    if ai_type == "euclidean":
+        selected = EuclideanHeuristicAI().select_action(state.board, state.current_player, paths)
+    elif ai_type == "chebyshev":
+        selected = ChebyshevHeuristicAI().select_action(state.board, state.current_player, paths)
     else:
-        selected = GraphDistanceAI().select_action(state.board, state.current_player, paths)
+        selected = GraphHeuristicAI().select_action(state.board, state.current_player, paths)
     if selected is None:
         return JSONResponse(
             status_code=400,

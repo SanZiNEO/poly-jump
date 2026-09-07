@@ -1,11 +1,11 @@
-"""纯距离 AI 基础测试。"""
+"""启发式 AI 基础测试。"""
 
 from __future__ import annotations
 
 from backend.game.ai import (
-    ChebyshevDistanceAI,
-    EuclideanDistanceAI,
-    GraphDistanceAI,
+    ChebyshevHeuristicAI,
+    EuclideanHeuristicAI,
+    GraphHeuristicAI,
 )
 from backend.game.board import Board
 from backend.game.config import PolyJumpConfig
@@ -27,27 +27,27 @@ def sample_paths():
     ]
 
 
-def test_euclidean_ai_picks_closer_to_target():
+def test_euclidean_heuristic_picks_closer_to_target():
     board = make_board()
-    chosen = EuclideanDistanceAI().select_action(board, 1, sample_paths())
+    chosen = EuclideanHeuristicAI().select_action(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
-def test_chebyshev_ai_picks_closer_to_target():
+def test_chebyshev_heuristic_picks_closer_to_target():
     board = make_board()
-    chosen = ChebyshevDistanceAI().select_action(board, 1, sample_paths())
+    chosen = ChebyshevHeuristicAI().select_action(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
-def test_graph_distance_ai_picks_forward():
+def test_graph_heuristic_picks_forward():
     board = make_board()
-    chosen = GraphDistanceAI().select_action(board, 1, sample_paths())
+    chosen = GraphHeuristicAI().select_action(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
 def test_graph_distance_map():
     board = make_board()
     directions = [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)]
-    dist = GraphDistanceAI._distance_map(board, {(5, 0, 0)}, directions)
+    dist = GraphHeuristicAI._graph_distance_map(board, {(5, 0, 0)}, directions)
     assert dist.get((0, 0, 0)) == 5
     assert dist.get((5, 0, 0)) == 0

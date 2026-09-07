@@ -13,7 +13,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from .ai import GraphDistanceAI
+from .ai import GraphHeuristicAI
 from .config_loader import load_config
 from .game_state import GameState
 from .serializers import path_to_lists, state_to_dict
@@ -68,7 +68,7 @@ def main() -> int:
 
     _print_state_summary(state)
 
-    ai = GraphDistanceAI()
+    ai = GraphHeuristicAI()
     for action_index in range(args.actions):
         if state.winner is not None:
             break

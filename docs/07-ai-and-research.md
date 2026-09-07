@@ -5,14 +5,14 @@ PolyJump 本身是游戏，不包含 AI 训练逻辑。
 
 ## 当前 AI
 
-游戏内置三种纯距离导向 AI（由 `ai_research` 基准评测筛选）：
+游戏内置三种启发式 AI（由 `ai_research` 基准评测筛选）：
 
-- GraphDistanceAI（默认）
+- GraphHeuristicAI（默认）
   - 使用真实图距离 BFS 评估到目标区的最少边数（图距离）
   - 只以“把棋子送进目标区”为目标，不读取计分
-- EuclideanDistanceAI
+- EuclideanHeuristicAI
   - 使用三维欧氏距离选择靠近目标区的走法
-- ChebyshevDistanceAI
+- ChebyshevHeuristicAI
   - 使用切比雪夫距离选择靠近目标区的走法
 
 ## AI 玩家模式

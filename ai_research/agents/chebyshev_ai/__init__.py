@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from ..base import DistanceAgent, Point, chebyshev
+from ..base import HeuristicAgent, Point, chebyshev
 
 
-class ChebyshevAgent(DistanceAgent):
+class ChebyshevAgent(HeuristicAgent):
     slug = "chebyshev"
     display_name = "切比雪夫距离"
 
-    def distance(self, a: Point, b: Point) -> float:
+    def heuristic_distance(self, a: Point, b: Point) -> float:
         return float(chebyshev(a, b))

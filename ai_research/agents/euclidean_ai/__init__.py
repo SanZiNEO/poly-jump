@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from ..base import DistanceAgent, Point, euclidean
+from ..base import HeuristicAgent, Point, euclidean
 
 
-class EuclideanAgent(DistanceAgent):
+class EuclideanAgent(HeuristicAgent):
     slug = "euclidean"
     display_name = "欧氏距离"
 
-    def distance(self, a: Point, b: Point) -> float:
+    def heuristic_distance(self, a: Point, b: Point) -> float:
         return euclidean(a, b)

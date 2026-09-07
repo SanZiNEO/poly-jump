@@ -147,6 +147,7 @@ tests/                   # pytest tests
 | [AI / Research](docs/07-ai-and-research.md) | AI and research interface |
 | [References](docs/08-references.md) | References |
 | [Path Metrics](docs/09-path-metrics.md) | Action / Step data model |
+| [Semantics](docs/10-semantics.md) | Rules / scoring / replay semantics |
 
 ## Current Status
 

@@ -147,6 +147,7 @@ tests/                   # pytest 测试
 | [AI / 研究](docs/07-ai-and-research.md) | AI 和研究接口 |
 | [参考资料](docs/08-references.md) | 参考 |
 | [路径度量](docs/09-path-metrics.md) | Action / Step 数据模型 |
+| [语义说明](docs/10-semantics.md) | 规则/计分/回放等语义 |
 
 ## 当前状态
 

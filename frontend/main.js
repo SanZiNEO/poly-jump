@@ -534,7 +534,7 @@ async function submitAction(path) {
 async function handleAiAction() {
   if (state.replayMode) return;
   const player = state.board && state.board.current_player;
-  const aiType = (state.aiTypes && state.aiTypes[player]) || "distance_graph";
+  const aiType = (state.aiTypes && state.aiTypes[player]) || "graph_bfs";
   const res = await fetch(`/api/game/${state.gameId}/ai-action?ai_type=${encodeURIComponent(aiType)}`, {
     method: "POST",
   });

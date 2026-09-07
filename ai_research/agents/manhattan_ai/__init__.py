@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from ..base import DistanceAgent, Point, manhattan
+from ..base import HeuristicAgent, Point, manhattan
 
 
-class ManhattanAgent(DistanceAgent):
+class ManhattanAgent(HeuristicAgent):
     slug = "manhattan"
     display_name = "曼哈顿距离"
 
-    def distance(self, a: Point, b: Point) -> float:
+    def heuristic_distance(self, a: Point, b: Point) -> float:
         return float(manhattan(a, b))

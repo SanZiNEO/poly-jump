@@ -90,14 +90,14 @@ class Agent:
         return f"{self.__class__.__name__}(slug={self.slug!r})"
 
 
-class DistanceAgent(Agent):
-    """按某种度量距离目标区的“贪心前进” AI。
+class HeuristicAgent(Agent):
+    """按某种启发式距离目标区的“贪心前进” AI。
 
     评分：before_distance - after_distance，越大越接近目标区。
     同分时优先短路径。
     """
 
-    def distance(self, a: Point, b: Point) -> float:
+    def heuristic_distance(self, a: Point, b: Point) -> float:
         raise NotImplementedError
 
     def choose(self, env: GameEnv) -> Optional[list]:
@@ -115,8 +115,8 @@ class DistanceAgent(Agent):
         def gain(path: Sequence[Sequence[int]]) -> float:
             start = tuple_point(path[0])
             end = tuple_point(path[-1])
-            before = min(self.distance(start, t) for t in targets)
-            after = min(self.distance(end, t) for t in targets)
+            before = min(self.heuristic_distance(start, t) for t in targets)
+            after = min(self.heuristic_distance(end, t) for t in targets)
             return float(before - after)
 
         best_score = max((gain(p), -len(p)) for p in legal)
