@@ -24,6 +24,7 @@ ai_research/
 │   ├── graph_bfs_ai/            # 图距离 BFS 贪心
 │   └── mcts_ai/                 # MCTS 搜索 baseline
 ├── pettingzoo_env.py            # PettingZoo AEC 包装
+├── compare_models.py            # 跨 A/B/C/D 模型的小对比
 ├── metrics.py                   # 指标计算与汇总
 ├── runner.py                    # 批量评测入口
 └── runs/                        # 实验结果（按时间戳归档，已 gitignore）
