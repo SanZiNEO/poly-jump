@@ -1,4 +1,4 @@
-# PolyJump 实现指南
+﻿# PolyJump 实现指南
 
 本文档按步骤指导实现一个最小可运行版本。
 
@@ -17,7 +17,7 @@ backend/
     geometry_a.py
     geometry_b.py
     board.py
-    moves.py
+    movement.py
     rules.py
     winner.py
     game_state.py
@@ -74,19 +74,19 @@ class Board:
         self.setup_initial_layout()
 ```
 
-### 1.6 MoveGenerator
+### 1.6 ActionGenerator
 
 ```python
-class MoveGenerator:
-    def legal_moves(self, board, player):
+class ActionGenerator:
+    def legal_actions(self, board, player):
         paths = []
         for pos, owner in board.pieces.items():
             if owner != player:
                 continue
-            paths.extend(self.step_moves(board, pos))
-            paths.extend(self.jump_moves(board, pos))
+            paths.extend(self.single_step_actions(board, pos))
+            paths.extend(self.jump_actions(board, pos))
             if config.movement.allow_chain:
-                paths.extend(self.chain_moves(board, pos))
+                paths.extend(self.chain_actions(board, pos))
         return paths
 ```
 
@@ -111,16 +111,16 @@ async def new_game(config: dict):
 async def get_game(game_id: str):
     return state_to_json(states[game_id])
 
-@app.get("/api/game/{game_id}/legal-moves")
-async def legal_moves(game_id: str):
+@app.get("/api/game/{game_id}/legal-actions")
+async def legal_actions(game_id: str):
     state = states[game_id]
-    paths = MoveGenerator().legal_moves(state.board, state.current_player)
+    paths = ActionGenerator().legal_actions(state.board, state.current_player)
     return {"player": state.current_player, "paths": paths}
 
-@app.post("/api/game/{game_id}/move")
-async def move(game_id: str, body: MoveRequest):
+@app.post("/api/game/{game_id}/action")
+async def action(game_id: str, body: ActionRequest):
     state = states[game_id]
-    ok = apply_move(state, body.path)
+    ok = apply_action(state, body.path)
     if not ok:
         return {"ok": False}
     return {"ok": True, "state": state_to_json(state)}
@@ -181,13 +181,13 @@ routes.forEach(route => {
 function onPointClick(pos) {
     if (!isCurrentPlayerPiece(pos)) return;
     selected = pos;
-    const res = await fetch("/api/game/" + gameId + "/legal-moves");
+    const res = await fetch("/api/game/" + gameId + "/legal-actions");
     highlightPaths(res.paths.filter(path => path[0] === pos));
 }
 
 function onDestinationClick(pos) {
     const path = findPath(selected, pos);
-    if (path) submitMove(path);
+    if (path) submitAction(path);
 }
 ```
 
@@ -219,9 +219,9 @@ function onDestinationClick(pos) {
 ### 5.1 普通移动
 
 ```python
-def test_step_move():
+def test_single_move_action():
     board = create_board(2, A, [6])
-    assert contains_move(movegen.legal_moves(board, 1), [[0,0,0], [1,0,0]])
+    assert contains_action(action_gen.legal_actions(board, 1), [[0,0,0], [1,0,0]])
 ```
 
 ### 5.2 单跳
@@ -230,7 +230,7 @@ def test_step_move():
 def test_single_jump():
     board.set_piece((2,0,0), 2)
     board.set_piece((0,0,0), 1)
-    paths = movegen.legal_moves(board, 1)
+    paths = action_gen.legal_actions(board, 1)
     assert [[0,0,0], [4,0,0]] in paths
 ```
 
@@ -241,7 +241,7 @@ def test_chain_jump():
     board.set_piece((2,0,0), 2)
     board.set_piece((4,0,0), 2)
     board.set_piece((0,0,0), 1)
-    paths = movegen.legal_moves(board, 1)
+    paths = action_gen.legal_actions(board, 1)
     assert [[0,0,0], [2,0,0], [4,0,0]] in paths or [[0,0,0], [4,0,0]] in paths
 ```
 

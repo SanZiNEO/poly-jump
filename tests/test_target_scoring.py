@@ -25,22 +25,22 @@ def test_enter_target_from_outside_scores():
     state.board.set_piece((0, 0, 0), 1)
     state.current_player = 1
 
-    moves = state.legal_moves()
-    target_move = [m for m in moves if m[-1] == (1, 0, 0)]
-    assert target_move
-    assert state.perform_move(target_move[0])
+    actions = state.legal_actions()
+    target_action = [a for a in actions if a[-1] == (1, 0, 0)]
+    assert target_action
+    assert state.perform_action(target_action[0])
 
     assert state.scores[1] == 20
 
 
-def test_move_inside_target_does_not_score_again():
+def test_action_inside_target_does_not_score_again():
     state = make_state()
     state.board.set_piece((1, 0, 0), 1)
     state.current_player = 1
 
-    moves = state.legal_moves()
-    inside_move = [m for m in moves if m[-1] == (2, 0, 0)]
-    assert inside_move
-    assert state.perform_move(inside_move[0])
+    actions = state.legal_actions()
+    inside_action = [a for a in actions if a[-1] == (2, 0, 0)]
+    assert inside_action
+    assert state.perform_action(inside_action[0])
 
     assert state.scores[1] == 0

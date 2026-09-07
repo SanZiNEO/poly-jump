@@ -7,11 +7,11 @@ from typing import List, Sequence, Tuple
 from ..board import Board
 from ..config import PolyJumpConfig
 from ..directions import resolve_direction_set
-from ..moves.segment import (
+from ..movement.segment import (
     is_jump_segment,
-    is_two_step_segment,
+    is_two_hop_segment,
     jump_mid,
-    two_step_mid,
+    two_hop_mid,
 )
 from .capture import CaptureHandler
 
@@ -19,7 +19,7 @@ Point = Tuple[int, int, int]
 Path = List[Point]
 
 
-class MoveApplier:
+class ActionApplier:
     def __init__(self, config: PolyJumpConfig):
         self.config = config
         self.directions = resolve_direction_set(
@@ -83,6 +83,6 @@ class MoveApplier:
         """返回标准跳/两格跳中被跳棋子位置；不是跳跃段返回 None。"""
         if is_jump_segment(src, dst, self.directions):
             return jump_mid(src, dst)
-        if is_two_step_segment(src, dst, self.directions):
-            return two_step_mid(src, dst)
+        if is_two_hop_segment(src, dst, self.directions):
+            return two_hop_mid(src, dst)
         return None

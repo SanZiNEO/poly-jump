@@ -29,19 +29,19 @@ def sample_paths():
 
 def test_euclidean_ai_picks_closer_to_target():
     board = make_board()
-    chosen = EuclideanDistanceAI().select_move(board, 1, sample_paths())
+    chosen = EuclideanDistanceAI().select_action(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
 def test_chebyshev_ai_picks_closer_to_target():
     board = make_board()
-    chosen = ChebyshevDistanceAI().select_move(board, 1, sample_paths())
+    chosen = ChebyshevDistanceAI().select_action(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 
 def test_graph_distance_ai_picks_forward():
     board = make_board()
-    chosen = GraphDistanceAI().select_move(board, 1, sample_paths())
+    chosen = GraphDistanceAI().select_action(board, 1, sample_paths())
     assert chosen == [(0, 0, 0), (1, 0, 0)]
 
 

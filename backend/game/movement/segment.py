@@ -31,7 +31,7 @@ def jump_mid(src: Point, dst: Point) -> Point:
     )
 
 
-def is_two_step_segment(
+def is_two_hop_segment(
     src: Point,
     dst: Point,
     directions: Sequence[Vector],
@@ -44,7 +44,7 @@ def is_two_step_segment(
     return quarter in directions
 
 
-def two_step_mid(src: Point, dst: Point) -> Point:
+def two_hop_mid(src: Point, dst: Point) -> Point:
     """返回两格跳段中被跳位置的坐标。"""
     return (
         src[0] + (dst[0] - src[0]) // 2,

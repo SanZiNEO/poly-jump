@@ -96,12 +96,12 @@ GET /api/direction-sets
 ## 5. movement
 
 ```text
-allow_step
+allow_single_move
 allow_jump
 allow_chain
 hop_mode: FREE_STOP / FORCE_ALL
-two_step_hop
-max_chain_length
+two_hop
+max_chain_steps
 ```
 
 ## 6. capture / goal

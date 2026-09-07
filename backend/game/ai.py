@@ -23,7 +23,7 @@ class _DistanceAI:
     def _distance(self, a: Sequence[int], b: Sequence[int]) -> float:
         raise NotImplementedError
 
-    def select_move(
+    def select_action(
         self,
         board: Board,
         player: int,
@@ -64,7 +64,7 @@ class ChebyshevDistanceAI(_DistanceAI):
 class GraphDistanceAI:
     """真实图距离 BFS AI：只沿棋盘实际连边计算到目标区的最少步数。"""
 
-    def select_move(
+    def select_action(
         self,
         board: Board,
         player: int,

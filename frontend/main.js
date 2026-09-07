@@ -23,12 +23,12 @@ const state = {
   downPos: null,
   cameraInitialized: false,
   historyData: null,
-  replayStep: null,
+  replayAction: null,
   replayMode: false,
   replayTimer: null,
   replayControlsAttached: false,
   aiPlayers: new Set(),
-  aiMoveTimer: null,
+  aiActionTimer: null,
   animationEnabled: true,
   animationSpeed: 0.125,
   animationGroup: null,
@@ -331,11 +331,11 @@ function renderScoreBoard(board) {
 function updateHud(board) {
   const status = document.getElementById("status-text");
   const round = board.round || 1;
-  const step = board.step_count || 0;
+  const action = board.action_count || 0;
   if (board.winner) {
     status.textContent = `玩家 ${board.winner} 获胜！`;
   } else {
-    status.textContent = `第 ${round} 轮 · 第 ${step} 步 · 当前玩家：${board.current_player} · 点击本方棋子查看合法路径`;
+    status.textContent = `第 ${round} 轮 · 第 ${action} 行动 · 当前玩家：${board.current_player} · 点击本方棋子查看合法路径`;
   }
   updatePlayerRoster(board.config, board.current_player);
   renderScoreBoard(board);
@@ -347,51 +347,51 @@ function boardWithPieces(pieces) {
   return b;
 }
 
-function piecesForStep(step) {
+function piecesForAction(action) {
   const h = state.historyData;
   if (!h) return {};
-  if (step === 0) return { ...h.initial_pieces };
-  if (step <= h.snapshots.length) return { ...h.snapshots[step - 1] };
+  if (action === 0) return { ...h.initial_pieces };
+  if (action <= h.snapshots.length) return { ...h.snapshots[action - 1] };
   return { ...h.snapshots[h.snapshots.length - 1] };
 }
 
 function renderHistoryList() {
-  const list = document.getElementById("history-moves");
+  const list = document.getElementById("history-actions");
   if (!list) return;
   list.innerHTML = "";
 
   const h = state.historyData;
   if (!h) return;
 
-  const items = [{ step: 0, text: "开局" }];
-  h.moves.forEach((m, i) => {
+  const items = [{ action: 0, text: "开局" }];
+  h.actions.forEach((m, i) => {
     const pathText = m.path.map((p) => p.join(",")).join(" → ");
-    items.push({ step: i + 1, text: `${i + 1}. P${m.player} ${pathText}` });
+    items.push({ action: i + 1, text: `${i + 1}. P${m.player} ${pathText}` });
   });
 
   items.forEach((item) => {
     const div = document.createElement("div");
-    div.className = "move-item" + (state.replayStep === item.step ? " current" : "");
+    div.className = "action-item" + (state.replayAction === item.action ? " current" : "");
     div.textContent = item.text;
-    div.addEventListener("click", () => setReplayStep(item.step));
+    div.addEventListener("click", () => setReplayAction(item.action));
     list.appendChild(div);
   });
 }
 
-function setReplayStep(step) {
+function setReplayAction(action) {
   const h = state.historyData;
   if (!h) return;
   const max = h.snapshots.length;
-  step = Math.max(0, Math.min(step, max));
+  action = Math.max(0, Math.min(action, max));
 
-  state.replayStep = step;
+  state.replayAction = action;
   state.replayMode = true;
-  renderBoard(boardWithPieces(piecesForStep(step)));
+  renderBoard(boardWithPieces(piecesForAction(action)));
 
   const status = document.getElementById("status-text");
-  if (step === 0) status.textContent = "回放中：开局";
-  else if (step === max) status.textContent = `回放中：最后一手 (${max})`;
-  else status.textContent = `回放中：第 ${step} 手`;
+  if (action === 0) status.textContent = "回放中：开局";
+  else if (action === max) status.textContent = `回放中：最后一手 (${max})`;
+  else status.textContent = `回放中：第 ${action} 手`;
 
   renderHistoryList();
 }
@@ -409,14 +409,14 @@ function startAutoReplay() {
   stopAutoReplay();
   const h = state.historyData;
   if (!h) return;
-  let step = state.replayStep ?? 0;
+  let action = state.replayAction ?? 0;
   state.replayTimer = setInterval(() => {
-    if (step >= h.snapshots.length) {
+    if (action >= h.snapshots.length) {
       stopAutoReplay();
       return;
     }
-    step += 1;
-    setReplayStep(step);
+    action += 1;
+    setReplayAction(action);
   }, 800);
   const btn = document.getElementById("replay-auto");
   if (btn) btn.textContent = translations[getCurrentLang()].replay_stop;
@@ -430,15 +430,15 @@ async function loadHistory(gameId) {
 }
 
 function attachReplayControls() {
-  document.getElementById("replay-start").addEventListener("click", () => setReplayStep(0));
-  document.getElementById("replay-prev").addEventListener("click", () => setReplayStep((state.replayStep ?? 1) - 1));
-  document.getElementById("replay-next").addEventListener("click", () => setReplayStep((state.replayStep ?? -1) + 1));
-  document.getElementById("replay-end").addEventListener("click", () => setReplayStep(state.historyData ? state.historyData.snapshots.length : 0));
+  document.getElementById("replay-start").addEventListener("click", () => setReplayAction(0));
+  document.getElementById("replay-prev").addEventListener("click", () => setReplayAction((state.replayAction ?? 1) - 1));
+  document.getElementById("replay-next").addEventListener("click", () => setReplayAction((state.replayAction ?? -1) + 1));
+  document.getElementById("replay-end").addEventListener("click", () => setReplayAction(state.historyData ? state.historyData.snapshots.length : 0));
   document.getElementById("replay-auto").addEventListener("click", () => {
     if (state.replayTimer) stopAutoReplay();
     else startAutoReplay();
   });
-  document.getElementById("ai-move-btn").addEventListener("click", handleAiMove);
+  document.getElementById("ai-action-btn").addEventListener("click", handleAiAction);
   document.getElementById("anim-enabled").addEventListener("change", (e) => {
     state.animationEnabled = e.target.checked;
   });
@@ -476,10 +476,10 @@ function highlightPaths(paths) {
   });
 }
 
-async function loadLegalPathsFor(pos) {
+async function loadLegalActionsFor(pos) {
   const gameId = state.gameId;
   const res = await fetch(
-    `/api/game/${gameId}/legal-moves?piece=${keyOf(pos)}`
+    `/api/game/${gameId}/legal-actions?piece=${keyOf(pos)}`
   );
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
@@ -493,7 +493,7 @@ async function selectPiece(pos) {
   state.selected = pos;
   clearHighlights();
   try {
-    const paths = await loadLegalPathsFor(pos);
+    const paths = await loadLegalActionsFor(pos);
     state.legalPaths = paths;
     highlightPaths(paths);
   } catch (e) {
@@ -501,8 +501,8 @@ async function selectPiece(pos) {
   }
 }
 
-async function submitMove(path) {
-  const res = await fetch(`/api/game/${state.gameId}/move`, {
+async function submitAction(path) {
+  const res = await fetch(`/api/game/${state.gameId}/action`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path }),
@@ -515,12 +515,12 @@ async function submitMove(path) {
   state.selected = null;
   state.legalPaths = [];
   state.replayMode = false;
-  state.replayStep = null;
+  state.replayAction = null;
   stopAutoReplay();
 
   // 先让当前棋子本身沿路径移动动画
-  const lastMove = data.state.history[data.state.history.length - 1];
-  await playMoveAnimation(path, lastMove ? lastMove.player : data.state.current_player);
+  const lastAction = data.state.actions[data.state.actions.length - 1];
+  await playActionAnimation(path, lastAction ? lastAction.player : data.state.current_player);
 
   // 动画结束后再切到最终局面
   state.board = data.state;
@@ -528,14 +528,14 @@ async function submitMove(path) {
   updateHud(state.board);
   await loadHistory(state.gameId);
   renderAiPlayerControls();
-  maybeAutoMove();
+  maybeAutoAction();
 }
 
-async function handleAiMove() {
+async function handleAiAction() {
   if (state.replayMode) return;
   const player = state.board && state.board.current_player;
   const aiType = (state.aiTypes && state.aiTypes[player]) || "distance_graph";
-  const res = await fetch(`/api/game/${state.gameId}/ai-move?ai_type=${encodeURIComponent(aiType)}`, {
+  const res = await fetch(`/api/game/${state.gameId}/ai-action?ai_type=${encodeURIComponent(aiType)}`, {
     method: "POST",
   });
   const data = await res.json();
@@ -547,20 +547,20 @@ async function handleAiMove() {
   state.selected = null;
   state.legalPaths = [];
   state.replayMode = false;
-  state.replayStep = null;
+  state.replayAction = null;
   stopAutoReplay();
 
-  const lastMove = data.state.history[data.state.history.length - 1];
-  await playMoveAnimation(data.move || [], lastMove ? lastMove.player : data.state.current_player);
+  const lastAction = data.state.actions[data.state.actions.length - 1];
+  await playActionAnimation(data.action || [], lastAction ? lastAction.player : data.state.current_player);
 
   state.board = data.state;
   renderBoard(state.board);
   updateHud(state.board);
   await loadHistory(state.gameId);
-  maybeAutoMove();
+  maybeAutoAction();
 }
 
-function clearMoveAnimation() {
+function clearActionAnimation() {
   if (state.animationGroup) {
     state.scene.remove(state.animationGroup);
     while (state.animationGroup.children.length) {
@@ -572,13 +572,13 @@ function clearMoveAnimation() {
   }
 }
 
-function playMoveAnimation(path, player) {
+function playActionAnimation(path, player) {
   return new Promise((resolve) => {
     if (!state.animationEnabled || !state.scene || !path || path.length < 2) {
       resolve();
       return;
     }
-    clearMoveAnimation();
+    clearActionAnimation();
 
     // 找到当前棋盘上位于起点的棋子 mesh
     const startKey = keyOf(path[0]);
@@ -641,7 +641,7 @@ function playMoveAnimation(path, player) {
       if (t < 1) {
         requestAnimationFrame(tick);
       } else {
-        clearMoveAnimation();
+        clearActionAnimation();
         resolve();
       }
     }
@@ -666,7 +666,7 @@ function renderAiPlayerControls() {
       if (cb.checked) state.aiPlayers.add(i);
       else state.aiPlayers.delete(i);
       renderAiPlayerControls();
-      maybeAutoMove();
+      maybeAutoAction();
     });
     const span = document.createElement("span");
     span.textContent = `P${i} AI`;
@@ -676,20 +676,20 @@ function renderAiPlayerControls() {
   }
 }
 
-function stopAIMove() {
-  if (state.aiMoveTimer) {
-    clearTimeout(state.aiMoveTimer);
-    state.aiMoveTimer = null;
+function stopAIAction() {
+  if (state.aiActionTimer) {
+    clearTimeout(state.aiActionTimer);
+    state.aiActionTimer = null;
   }
 }
 
-function maybeAutoMove() {
-  stopAIMove();
+function maybeAutoAction() {
+  stopAIAction();
   if (state.winner || state.replayMode) return;
   if (!state.aiPlayers.has(state.board.current_player)) return;
-  state.aiMoveTimer = setTimeout(async () => {
-    state.aiMoveTimer = null;
-    await handleAiMove();
+  state.aiActionTimer = setTimeout(async () => {
+    state.aiActionTimer = null;
+    await handleAiAction();
   }, 600);
 }
 
@@ -697,7 +697,7 @@ function initAIPlayers() {
   state.aiPlayers = new Set((window.__polyJump && window.__polyJump.aiPlayers) || []);
   state.aiTypes = (window.__polyJump && window.__polyJump.aiTypes) || {};
   renderAiPlayerControls();
-  maybeAutoMove();
+  maybeAutoAction();
 }
 
 function findPathTo(dest) {
@@ -734,7 +734,7 @@ async function onPointerUp(e) {
 
   if (hit.userData.kind === "destination") {
     const path = findPathTo(pos);
-    if (path) submitMove(path);
+    if (path) submitAction(path);
     return;
   }
 
@@ -763,7 +763,7 @@ window.PolyJumpInit = function (gameId, initialBoard) {
   state.selected = null;
   state.legalPaths = [];
   state.replayMode = false;
-  state.replayStep = null;
+  state.replayAction = null;
   state.historyData = null;
   setupRenderer();
   renderBoard(state.board);
@@ -793,13 +793,13 @@ window.PolyJumpDestroy = function () {
   state.board = null;
   state.cameraInitialized = false;
   state.historyData = null;
-  state.replayStep = null;
+  state.replayAction = null;
   state.replayMode = false;
   state.replayControlsAttached = false;
   state.aiPlayers = new Set();
   stopAutoReplay();
-  stopAIMove();
-  clearMoveAnimation();
+  stopAIAction();
+  clearActionAnimation();
 };
 
 // 如果主菜单在主脚本就绪前就创建了对局，这里补初始化。

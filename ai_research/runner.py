@@ -70,11 +70,11 @@ def make_b_config(radius: int = 6, players: int = 2) -> PolyJumpConfig:
         b_radius=radius,
         players=players,
         movement=MovementConfig(
-            allow_step=True,
+            allow_single_move=True,
             allow_jump=True,
             allow_chain=True,
             hop_mode=HopMode.FREE_STOP,
-            two_step_hop=False,
+            two_hop=False,
         ),
         capture=CaptureConfig(
             mode=CaptureMode.NONE,
@@ -116,11 +116,11 @@ def make_a_config(
             layers=layers,
         ),
         movement=MovementConfig(
-            allow_step=True,
+            allow_single_move=True,
             allow_jump=True,
             allow_chain=True,
             hop_mode=HopMode.FREE_STOP,
-            two_step_hop=False,
+            two_hop=False,
         ),
         capture=CaptureConfig(
             mode=CaptureMode.NONE,
@@ -162,25 +162,25 @@ def build_config(args: argparse.Namespace) -> PolyJumpConfig:
 def play_one_game(
     env: GameEnv,
     agents: Dict[int, Agent],
-    max_steps: int,
+    max_actions: int,
 ) -> dict:
     """用 GameEnv 跑一局，返回本局 analyze_match 结果 + player_agent。"""
     while True:
         obs = env.observe()
         if obs.done:
             break
-        if obs.action_count >= max_steps:
+        if obs.action_count >= max_actions:
             break
 
         player = obs.current_player
         agent = agents[player]
-        move = agent.choose(env)
-        if move is None:
-            legal = env.legal_moves()
+        action = agent.choose(env)
+        if action is None:
+            legal = env.legal_actions()
             if not legal:
                 break
-            move = legal[0]
-        env.step(move)
+            action = legal[0]
+        env.execute_action(action)
 
     state = env.state_dict()
     targets = get_targets(state)
@@ -198,7 +198,7 @@ def build_summary_markdown(summary: dict, agents_info: Dict[str, str]) -> str:
     for slug, row in summary["agents"].items():
         lines.append(
             f"| {agents_info.get(slug, slug)} | {row['win_rate']:.2%} | {row['games']} "
-            f"| {row['avg_moves']} | {row['avg_step_count']} "
+            f"| {row['avg_actions']} | {row['avg_step_count']} "
             f"| {row['avg_straight_distance']} | {row['avg_path_distance']} | {row['avg_step_per_action']} |"
         )
     lines.append("")
@@ -209,7 +209,7 @@ def build_summary_markdown(summary: dict, agents_info: Dict[str, str]) -> str:
         lines.append("|---|---|---|---|---|")
         for pair, row in summary["pairs"].items():
             lines.append(
-                f"| {pair} | {row['a_wins']} | {row['b_wins']} | {row['draws']} | {row['avg_moves']} |"
+                f"| {pair} | {row['a_wins']} | {row['b_wins']} | {row['draws']} | {row['avg_actions']} |"
             )
         lines.append("")
     else:
@@ -233,7 +233,7 @@ def main() -> int:
     parser.add_argument("--layers", type=int, default=0, help="A 模型起始层数；0=按最短边自动")
     parser.add_argument("--direction-set", default="", help="A 模型方向集，逗号分隔，如 6 或 6,12,8")
     parser.add_argument("--players", type=int, default=2, choices=[2, 3, 4, 6, 8], help="玩家人数")
-    parser.add_argument("--max-steps", type=int, default=2000, help="单局最大步数")
+    parser.add_argument("--max-actions", type=int, default=2000, help="单局最大 action 数")
     parser.add_argument("--seed", type=int, default=42, help="随机种子")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="输出根目录")
     args = parser.parse_args()
@@ -264,7 +264,7 @@ def main() -> int:
         "config": config.model_dump(),
         "agents": agent_slugs,
         "games_per_pair": args.games,
-        "max_steps": args.max_steps,
+        "max_actions": args.max_actions,
     }
     with (run_dir / "experiment.json").open("w", encoding="utf-8") as f:
         json.dump(experiment, f, ensure_ascii=False, indent=2)
@@ -296,7 +296,7 @@ def main() -> int:
                         p: AGENT_REGISTRY[slug]()
                         for p, slug in player_agent_slugs.items()
                     }
-                    match = play_one_game(env, agents, args.max_steps)
+                    match = play_one_game(env, agents, args.max_actions)
                     match["player_agent"] = player_agent_slugs
 
                     game_index += 1
@@ -308,7 +308,7 @@ def main() -> int:
                     print(
                         f"[{game_index}/{total_games}] {a_slug} vs {b_slug} "
                         f"(side {player_agent_slugs[1]}/{player_agent_slugs[2]}) "
-                        f"winner={match.get('winner')} moves={match.get('moves')}"
+                        f"winner={match.get('winner')} action_count={match.get('action_count')}"
                     )
     else:
         combos = list(combinations(agent_slugs, args.players))
@@ -329,7 +329,7 @@ def main() -> int:
                     p: AGENT_REGISTRY[slug]()
                     for p, slug in player_agent_slugs.items()
                 }
-                match = play_one_game(env, agents, args.max_steps)
+                match = play_one_game(env, agents, args.max_actions)
                 match["player_agent"] = player_agent_slugs
 
                 game_index += 1
@@ -341,7 +341,7 @@ def main() -> int:
                 lineup = "/".join(player_agent_slugs.values())
                 print(
                     f"[{game_index}/{total_games}] {lineup} "
-                    f"winner={match.get('winner')} moves={match.get('moves')}"
+                    f"winner={match.get('winner')} action_count={match.get('action_count')}"
                 )
 
     summary = aggregate_matches(matches)
@@ -352,12 +352,12 @@ def main() -> int:
     with (run_dir / "curves.csv").open("w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
-            "agent", "win_rate", "games", "avg_moves", "avg_step_count",
+            "agent", "win_rate", "games", "avg_actions", "avg_step_count",
             "avg_straight_distance", "avg_path_distance", "avg_step_per_action",
         ])
         for slug, row in summary["agents"].items():
             writer.writerow([
-                slug, row["win_rate"], row["games"], row["avg_moves"],
+                slug, row["win_rate"], row["games"], row["avg_actions"],
                 row["avg_step_count"], row["avg_straight_distance"],
                 row["avg_path_distance"], row["avg_step_per_action"],
             ])

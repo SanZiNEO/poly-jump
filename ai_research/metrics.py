@@ -1,11 +1,15 @@
 """对局指标计算与汇总。
 
-第一阶段指标聚焦“效率”：
+统一术语：
+- action：一次玩家操作
+- step：一次 action 内的移动
+
+指标包括：
 - 胜率
-- 平均步数 / 回合数
-- 目标区进入/离开/穿过统计（针对“AI 进目标区又出来”）
+- action 数 / step 数
+- straight_distance / path_distance
+- 目标区进入/离开/穿过统计
 - 终局时已进入目标区的棋子数
-- 平均路径长度
 """
 
 from __future__ import annotations
@@ -25,7 +29,7 @@ def analyze_state(
     targets_by_player: Dict[int, Set[Point]],
 ) -> dict:
     """分析一局终局/中途状态，返回该局的指标。"""
-    history = state.get("history", [])
+    actions = state.get("actions", [])
     players_meta: Dict[int, dict] = {}
 
     for player in range(1, int(state.get("config", {}).get("players", 2)) + 1):
@@ -33,25 +37,25 @@ def analyze_state(
         entered = 0
         left = 0
         through = 0
-        actions = 0
+        action_count = 0
         step_count_total = 0
         straight_total = 0.0
         path_total = 0.0
-        for move in history:
-            if move.get("player") != player:
+        for action in actions:
+            if action.get("player") != player:
                 continue
-            path = move.get("path", [])
+            path = action.get("path", [])
             if len(path) < 2:
                 continue
-            actions += 1
+            action_count += 1
             start = tuple_point(path[0])
             end = tuple_point(path[-1])
-            step_count_total += int(move.get("step_count", 0)) or max(0, len(path) - 1)
-            straight_total += float(move.get("straight_distance", 0.0))
-            path_total += float(move.get("path_distance", 0.0))
-            if not move.get("straight_distance"):
+            step_count_total += int(action.get("step_count", 0)) or max(0, len(path) - 1)
+            straight_total += float(action.get("straight_distance", 0.0))
+            path_total += float(action.get("path_distance", 0.0))
+            if not action.get("straight_distance"):
                 straight_total += straight_distance(path)
-            if not move.get("path_distance"):
+            if not action.get("path_distance"):
                 path_total += path_distance(path)
             if start not in target and end in target:
                 entered += 1
@@ -71,7 +75,7 @@ def analyze_state(
                 final_inside += 1
 
         players_meta[player] = {
-            "actions": actions,
+            "action_count": action_count,
             "entered": entered,
             "left": left,
             "through": through,
@@ -83,7 +87,7 @@ def analyze_state(
 
     return {
         "winner": state.get("winner"),
-        "moves": len(history),
+        "action_count": len(actions),
         "players": players_meta,
     }
 
@@ -98,8 +102,7 @@ def analyze_match(
     result["game_id"] = state.get("game_id")
     result["current_player"] = state.get("current_player")
     result["round"] = state.get("round")
-    result["action_count"] = state.get("action_count") or state.get("step_count")
-    result["history"] = state.get("history", [])
+    result["actions"] = state.get("actions", [])
     return result
 
 
@@ -125,27 +128,27 @@ def aggregate_matches(
         "step_count_total": 0,
         "straight_total": 0.0,
         "path_total": 0.0,
-        "moves_when_win": [],
-        "moves_all": [],
+        "actions_when_win": [],
+        "actions_all": [],
     })
     per_pair: Dict[Tuple[str, str], dict] = defaultdict(lambda: {
         "a_wins": 0,
         "b_wins": 0,
         "draws": 0,
-        "moves": [],
+        "actions": [],
     })
 
     for match in matches:
         agents = match.get("player_agent", {})
         winner = match.get("winner")
-        moves = match.get("moves", 0)
+        total_actions = match.get("action_count", 0)
         for p, slug in agents.items():
             meta = per_agent[slug]
             meta["games"] += 1
-            meta["moves_all"].append(moves)
+            meta["actions_all"].append(total_actions)
             if winner == p:
                 meta["wins"] += 1
-                meta["moves_when_win"].append(moves)
+                meta["actions_when_win"].append(total_actions)
             elif winner is None:
                 meta["draws"] += 1
             else:
@@ -156,7 +159,7 @@ def aggregate_matches(
             meta["left"] += pm.get("left", 0)
             meta["through"] += pm.get("through", 0)
             meta["final_inside_total"] += pm.get("final_inside", 0)
-            meta["action_count_total"] += pm.get("actions", 0)
+            meta["action_count_total"] += pm.get("action_count", 0)
             meta["step_count_total"] += pm.get("step_count", 0)
             meta["straight_total"] += pm.get("straight_distance", 0.0)
             meta["path_total"] += pm.get("path_distance", 0.0)
@@ -167,7 +170,7 @@ def aggregate_matches(
             b_slug = pair[1][1]
             key = (a_slug, b_slug)
             pp = per_pair[key]
-            pp["moves"].append(moves)
+            pp["actions"].append(total_actions)
             if winner is None:
                 pp["draws"] += 1
             else:
@@ -187,15 +190,14 @@ def aggregate_matches(
             "losses": m["losses"],
             "draws": m["draws"],
             "win_rate": round(wins / games, 4) if games else 0.0,
-            "avg_moves": round(sum(m["moves_all"]) / games, 2) if games else 0.0,
-            "avg_moves_when_win": (
-                round(sum(m["moves_when_win"]) / len(m["moves_when_win"]), 2)
-                if m["moves_when_win"] else 0.0
+            "avg_actions": round(m["action_count_total"] / games, 2) if games else 0.0,
+            "avg_actions_when_win": (
+                round(sum(m["actions_when_win"]) / len(m["actions_when_win"]), 2)
+                if m["actions_when_win"] else 0.0
             ),
             "avg_final_inside": round(m["final_inside_total"] / games, 2) if games else 0.0,
             "avg_left_per_game": round(m["left"] / games, 2) if games else 0.0,
             "avg_through_per_game": round(m["through"] / games, 2) if games else 0.0,
-            "avg_action_count": round(m["action_count_total"] / games, 2) if games else 0.0,
             "avg_step_count": round(m["step_count_total"] / games, 2) if games else 0.0,
             "avg_straight_distance": round(m["straight_total"] / games, 2) if games else 0.0,
             "avg_path_distance": round(m["path_total"] / games, 2) if games else 0.0,
@@ -215,7 +217,7 @@ def aggregate_matches(
             "a_wins": pp["a_wins"],
             "b_wins": pp["b_wins"],
             "draws": pp["draws"],
-            "avg_moves": round(sum(pp["moves"]) / len(pp["moves"]), 2) if pp["moves"] else 0.0,
+            "avg_actions": round(sum(pp["actions"]) / len(pp["actions"]), 2) if pp["actions"] else 0.0,
         }
 
     return summary

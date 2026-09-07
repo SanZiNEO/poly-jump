@@ -47,7 +47,7 @@ step_distances = [d1, d2, d3, d4, d5, d6, d7]
 
 ### 2. 历史记录
 
-`move_history` 中每个 action 同样记录这些字段：
+`action_history` 中每个 action 同样记录这些字段：
 
 ```json
 {
@@ -62,7 +62,7 @@ step_distances = [d1, d2, d3, d4, d5, d6, d7]
 
 ### 3. 状态 / 汇总
 
-`state_dict()`、`history_to_dict()` 和 `StepResult` 中提供汇总：
+`state_dict()`、`history_to_dict()` 和 `ActionResult` 中提供汇总：
 
 ```json
 {
@@ -87,7 +87,7 @@ step_distances = [d1, d2, d3, d4, d5, d6, d7]
 }
 ```
 
-`StepResult` 包含：
+`ActionResult` 包含：
 
 ```text
 action_count
@@ -102,7 +102,7 @@ total_path_distance
 - 平台只提供数据，不规定 AI 训练时使用哪些字段。
 - 训练方可以自行选择：
   - 只优化胜利
-  - 在 reward 中加入步数惩罚
+  - 在 reward 中加入 action/step 惩罚
   - 在观测中加入路径距离
   - 根据 `step_distances` 自定义更细的度量
 - 前端不读取这些字段，不修改前端行为。
@@ -111,7 +111,7 @@ total_path_distance
 
 `ai_research` 汇总中新增了：
 
-- `avg_moves`：平均 action 数
+- `avg_actions`：平均 action 数
 - `avg_step_count`：平均 step 数
 - `avg_straight_distance`：平均直线距离
 - `avg_path_distance`：平均路径距离

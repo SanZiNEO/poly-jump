@@ -25,12 +25,12 @@ class CaptureMode(str, Enum):
 
 
 class MovementConfig(BaseModel):
-    allow_step: bool = True
+    allow_single_move: bool = True
     allow_jump: bool = True
     allow_chain: bool = True
     hop_mode: HopMode = HopMode.FREE_STOP
-    two_step_hop: bool = False
-    max_chain_length: int = 0  # 0 = 不限制
+    two_hop: bool = False
+    max_chain_steps: int = 0  # 0 = 不限制
 
 
 class CaptureConfig(BaseModel):

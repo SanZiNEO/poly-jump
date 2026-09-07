@@ -17,14 +17,14 @@ class ScoringEngine:
         self.config = config
         self.scoring = config.scoring
 
-    def assess_move(
+    def assess_action(
         self,
         player: int,
         path: List[List[int]],
         capture_count: int = 0,
         reached_target: bool = False,
     ) -> dict:
-        """评估一步产生的分数变化。
+        """评估一次 action 产生的分数变化。
 
         返回：
         - chain_temp：连跳临时分（每多一次连跳 +1）

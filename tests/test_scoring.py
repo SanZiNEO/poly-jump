@@ -19,11 +19,11 @@ def make_engine(scoring: ScoringConfig | None = None) -> ScoringEngine:
 def test_chain_jump_scores_by_extra_jumps():
     engine = make_engine()
     # 普通跳不长分
-    result = engine.assess_move(1, [[0, 0, 0], [1, 0, 0]])
+    result = engine.assess_action(1, [[0, 0, 0], [1, 0, 0]])
     assert result["chain_temp"] == 0
 
     # 连跳两次：路径长度 3，临时分 +2
-    result = engine.assess_move(1, [[0, 0, 0], [2, 0, 0], [4, 0, 0]])
+    result = engine.assess_action(1, [[0, 0, 0], [2, 0, 0], [4, 0, 0]])
     assert result["chain_temp"] == 2
 
 
@@ -37,19 +37,19 @@ def test_chain_scoring_cap_limits_scored_jumps():
     engine = ScoringEngine(cfg)
     # 实际连跳 10 次，但计分上限 5
     path = [[0, 0, 0]] + [[i * 2, 0, 0] for i in range(1, 11)]
-    result = engine.assess_move(1, path)
+    result = engine.assess_action(1, path)
     assert result["chain_temp"] == 5
 
 
 def test_target_zone_points():
     engine = make_engine()
-    result = engine.assess_move(1, [[0, 0, 0], [1, 0, 0]], reached_target=True)
+    result = engine.assess_action(1, [[0, 0, 0], [1, 0, 0]], reached_target=True)
     assert result["target_points"] == 1
 
 
 def test_capture_points():
     engine = make_engine()
-    result = engine.assess_move(1, [[0, 0, 0], [2, 0, 0]], capture_count=3)
+    result = engine.assess_action(1, [[0, 0, 0], [2, 0, 0]], capture_count=3)
     assert result["capture_points"] == 6  # capture_points=2
 
 

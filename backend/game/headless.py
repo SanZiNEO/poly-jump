@@ -2,7 +2,7 @@
 
 用法：
     python -m backend.game.headless --config configs/a_2p_6dir.json
-    python -m backend.game.headless --config configs/a_2p_6dir.json --moves 10
+    python -m backend.game.headless --config configs/a_2p_6dir.json --actions 10
 
 这是游戏的可编程后端接口：通过配置文件启动规则引擎，
 不依赖前端；外部程序可以按自己的方式接入。
@@ -41,11 +41,11 @@ def main() -> int:
         help="JSON 配置文件路径",
     )
     parser.add_argument(
-        "--moves",
+        "--actions",
         "-n",
         type=int,
         default=0,
-        help="自动随机走多少步；0 表示只加载并打印初始局面",
+        help="自动执行多少个 action；0 表示只加载并打印初始局面",
     )
     parser.add_argument(
         "--seed",
@@ -69,29 +69,29 @@ def main() -> int:
     _print_state_summary(state)
 
     ai = GraphDistanceAI()
-    for step in range(args.moves):
+    for action_index in range(args.actions):
         if state.winner is not None:
             break
-        legal = state.legal_moves()
-        if not legal:
+        legal_actions = state.legal_actions()
+        if not legal_actions:
             print("当前玩家无合法走法，已跳过/终止")
             break
 
-        move = ai.select_move(state.board, state.current_player, legal)
-        ok = state.perform_move(move)
+        action = ai.select_action(state.board, state.current_player, legal_actions)
+        ok = state.perform_action(action)
         if not ok:
-            print(f"非法走法，终止: {move}")
+            print(f"非法 action，终止: {action}")
             return 1
 
-        last_move = state.move_history[-1]
+        last_action = state.action_history[-1]
         print(
-            f"[step {step + 1}] player={last_move['player']} "
-            f"move={path_to_lists(move)}"
+            f"[action {action_index + 1}] player={last_action['player']} "
+            f"action={path_to_lists(action)}"
         )
 
     print("== Final ==")
     print(f"winner: {state.winner}")
-    print(f"moves: {len(state.move_history)}")
+    print(f"actions: {len(state.action_history)}")
     print("state keys:", list(state_to_dict(state).keys()))
     return 0
 

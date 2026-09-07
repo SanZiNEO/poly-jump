@@ -1,4 +1,4 @@
-# 动作表示与合法路径生成
+﻿# 动作表示与合法路径生成
 
 ## 1. 基本动作
 
@@ -46,7 +46,7 @@ Path = [pos_0, pos_1, ..., pos_n]
 [[0,0,0], [4,0,0]]  // 跳过隔一格棋子
 ```
 
-具体由 `two_step_hop` 开关控制。
+具体由 `two_hop` 开关控制。
 
 ---
 
@@ -67,20 +67,20 @@ Path = [pos_0, pos_1, ..., pos_n]
 ### 4.1 普通移动
 
 ```python
-def step_moves(board, pos, directions):
-    moves = []
+def single_step_actions(board, pos, directions):
+    actions = []
     for v in directions:
         target = pos + v
         if board.is_inside(target) and board.is_empty(target):
-            moves.append([pos, target])
-    return moves
+            actions.append([pos, target])
+    return actions
 ```
 
 ### 4.2 单跳
 
 ```python
-def jump_moves(board, pos, directions):
-    moves = []
+def jump_actions(board, pos, directions):
+    actions = []
     for v in directions:
         mid = pos + v
         dest = pos + 2 * v
@@ -90,8 +90,8 @@ def jump_moves(board, pos, directions):
             and board.is_inside(dest)
             and board.is_empty(dest)
         ):
-            moves.append([pos, dest])
-    return moves
+            actions.append([pos, dest])
+    return actions
 ```
 
 ### 4.3 连跳
@@ -160,7 +160,7 @@ action = [(pos_0), (pos_1), ...]
 
 ## 7. 路径合法性校验
 
-后端在 `apply_move` 前必须重新校验：
+后端在 `apply_action` 前必须重新校验：
 
 1. 路径起点是当前玩家棋子
 2. 路径每一段都符合移动/跳跃规则

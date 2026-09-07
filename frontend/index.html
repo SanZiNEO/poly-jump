@@ -103,8 +103,8 @@
 
         <div class="switch-list">
           <label class="switch-row">
-            <input type="checkbox" id="allow-step" checked>
-            <span data-i18n="allow_step">允许普通移动</span>
+            <input type="checkbox" id="allow-single-move" checked>
+            <span data-i18n="allow_single_move">允许普通移动</span>
           </label>
           <label class="switch-row">
             <input type="checkbox" id="allow-jump" checked>
@@ -115,8 +115,8 @@
             <span data-i18n="allow_chain">允许连跳</span>
           </label>
           <label class="switch-row">
-            <input type="checkbox" id="allow-two-step">
-            <span data-i18n="allow_two_step">允许两格跳（空一格跳）</span>
+            <input type="checkbox" id="allow-two-hop">
+            <span data-i18n="allow_two_hop">允许两格跳（空一格跳）</span>
           </label>
         </div>
 
@@ -192,7 +192,7 @@
       <span id="status-text">加载中...</span>
       <div id="player-roster"></div>
       <div id="score-board"></div>
-      <button id="ai-move-btn" data-i18n="ai_move">AI 走一步</button>
+      <button id="ai-action-btn" data-i18n="ai_action">AI 行动</button>
       <button id="back-btn" data-i18n="back_menu">返回主菜单</button>
     </div>
     <div id="history-panel">
@@ -210,7 +210,7 @@
           <option value="0.1">快速（0.1s/格）</option>
         </select>
       </label>
-      <div id="history-moves"></div>
+      <div id="history-actions"></div>
       <div id="replay-controls">
         <button id="replay-start" title="回到开局" data-i18n="replay_start">⏮</button>
         <button id="replay-prev" title="上一步" data-i18n="replay_prev">◀</button>

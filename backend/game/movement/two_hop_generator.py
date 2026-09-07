@@ -18,11 +18,11 @@ from ..directions import Vector, add_vec, scale_vec
 from .types import Path, Point
 
 
-class TwoStepHopGenerator:
+class TwoHopGenerator:
     def __init__(self, directions: Sequence[Vector]):
         self.directions = list(directions)
 
-    def moves_from(self, board: Board, pos: Point) -> List[Path]:
+    def actions_from(self, board: Board, pos: Point) -> List[Path]:
         paths: List[Path] = []
         pos = tuple(pos)
         for v in self.directions:

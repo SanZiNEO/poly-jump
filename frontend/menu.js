@@ -243,12 +243,12 @@ function readConfig() {
     direction_set: fixedDirection !== null ? fixedDirection : dirs,
     custom_vectors: fixedDirection !== null ? [] : customs,
     movement: {
-      allow_step: document.getElementById("allow-step").checked,
+      allow_single_move: document.getElementById("allow-single-move").checked,
       allow_jump: document.getElementById("allow-jump").checked,
       allow_chain: document.getElementById("allow-chain").checked,
       hop_mode: document.getElementById("hop-mode").value,
-      two_step_hop: document.getElementById("allow-two-step").checked,
-      max_chain_length: 0,
+      two_hop: document.getElementById("allow-two-hop").checked,
+      max_chain_steps: 0,
     },
     capture: {
       mode: document.getElementById("capture-mode").value,

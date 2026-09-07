@@ -35,7 +35,7 @@ backend/
   game/
     config.py            # 配置类
     geometry/            # 所有几何模型
-    moves/               # 移动生成/校验
+    movement/            # 移动生成/校验
     rules/               # 规则执行/吃子/胜负
     env.py               # 干净游戏环境接口
     scoring.py           # 积分制

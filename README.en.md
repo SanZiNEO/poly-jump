@@ -40,7 +40,7 @@ Model A · 8 players
 | Geometry models | A / B / C / D + A-ext / B-ext / C-ext, 7 total |
 | Directions | 6 / 8 / 12 / 14 / 18 / 20 / 26, auto-matched or custom |
 | Players | 2 / 3 / 4 / 6 / 8 |
-| Movement | step, jump, chain jump, two-step hop, free stop, forced all |
+| Movement | single move, jump, chain jump, two-hop, free stop, forced all |
 | Game modes | Chinese checkers, Draughts (capture), Mixed |
 | Scoring | chain jump, capture, target zone, win bonus — configurable |
 | Frontend | HTML + Three.js, 3D rendering, legal-path highlight, AI autoplay, replay, i18n |
@@ -72,7 +72,7 @@ Starts the backend and opens the browser.
 ### Run headless
 
 ```powershell
-python -m backend.game.headless --config configs/a_2p_6dir.json --moves 10
+python -m backend.game.headless --config configs/a_2p_6dir.json --actions 10
 ```
 
 ### Run AI benchmark
@@ -101,14 +101,14 @@ while not obs.done:
     actions = obs.legal_actions
     # Plug in your own agent here: MCTS / RL / LLM agent, etc.
     action = actions[0]
-    obs = env.step(action)
+    obs = env.execute_action(action)
 ```
 
 The `ai_research/` directory provides a frontend-free batch benchmark:
 
 - 5 random/distance baselines
 - Full per-game records
-- Win rate, average moves, target-zone metrics
+- Win rate, average actions, target-zone metrics
 - JSON / CSV / Markdown summaries
 
 ## Project Structure
@@ -119,7 +119,7 @@ backend/
   game/
     config.py            # Configuration
     geometry/            # Geometry models
-    moves/               # Move generation / validation
+    movement/            # Action generation / validation
     rules/               # Rule application / capture / winner
     env.py               # GameEnv interface
     scoring.py           # Scoring

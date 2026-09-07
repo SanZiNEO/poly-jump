@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from typing import List, Tuple
+from typing import List
 
 from .path_metrics import path_metrics
-
-Path = Tuple[Tuple[int, int, int], ...]
 
 
 def action_index(paths: List[list]) -> List[dict]:

@@ -7,9 +7,9 @@ from typing import List, Optional, Sequence
 
 from .board import Board
 from .config import PolyJumpConfig
-from .moves import MoveGenerator, MoveValidator
+from .movement import ActionGenerator, ActionValidator
 from .path_metrics import path_metrics
-from .rules import MoveApplier, check_winner
+from .rules import ActionApplier, check_winner
 from .scoring import ScoringEngine
 
 
@@ -20,7 +20,7 @@ class GameState:
         self.board: Board = Board(config)
         self.current_player: int = 1
         self.winner: Optional[int] = None
-        self.move_history: List[dict] = []
+        self.action_history: List[dict] = []
         self.initial_pieces: dict = dict(self.board.pieces)
         self.snapshots: List[dict] = []
         self.scores: dict = {i: 0 for i in range(1, config.players + 1)}
@@ -29,37 +29,29 @@ class GameState:
     @property
     def action_count(self) -> int:
         """已经发生的 action（玩家操作）数量。"""
-        return len(self.move_history)
-
-    @property
-    def step_count(self) -> int:
-        """兼容别名：旧字段，意义等同 action_count。
-
-        新代码请使用 action_count，避免与 action 内部的 step 混淆。
-        """
-        return self.action_count
+        return len(self.action_history)
 
     @property
     def round(self) -> int:
-        if not self.move_history:
+        if not self.action_history:
             return 0
-        return (len(self.move_history) - 1) // self.config.players + 1
+        return (len(self.action_history) - 1) // self.config.players + 1
 
-    def legal_moves(self):
-        return MoveGenerator(self.config).legal_moves(self.board, self.current_player)
+    def legal_actions(self):
+        return ActionGenerator(self.config).legal_actions(self.board, self.current_player)
 
-    def legal_moves_for(self, pos) -> list:
-        return MoveGenerator(self.config).legal_moves_for_piece(
+    def legal_actions_for(self, pos) -> list:
+        return ActionGenerator(self.config).legal_actions_for_piece(
             self.board, self.current_player, tuple(pos)
         )
 
     def is_legal(self, path: Sequence[Sequence[int]]) -> bool:
-        return MoveValidator(self.config).is_legal(
+        return ActionValidator(self.config).is_legal(
             self.board, self.current_player, path
         )
 
-    def perform_move(self, path: Sequence[Sequence[int]]) -> bool:
-        """校验并应用一步；成功返回 True。"""
+    def perform_action(self, path: Sequence[Sequence[int]]) -> bool:
+        """校验并应用一次 action；成功返回 True。"""
         if self.winner is not None:
             return False
 
@@ -68,7 +60,7 @@ class GameState:
             return False
 
         player = self.current_player
-        capture_count = MoveApplier(self.config).apply(self.board, path_t, player)
+        capture_count = ActionApplier(self.config).apply(self.board, path_t, player)
 
         # 积分：连跳临时分 / 吃子分 / 进入目标区分
         engine = ScoringEngine(self.config)
@@ -78,7 +70,7 @@ class GameState:
             tuple(path_t[0]) not in target_set
             and tuple(path_t[-1]) in target_set
         )
-        assessment = engine.assess_move(
+        assessment = engine.assess_action(
             player, path_t, capture_count, reached_target
         )
         if self.config.scoring.enabled:
@@ -98,7 +90,7 @@ class GameState:
             )
 
         metrics = path_metrics(path_t)
-        self.move_history.append(
+        self.action_history.append(
             {
                 "player": player,
                 "path": [list(p) for p in path_t],
@@ -120,5 +112,5 @@ class GameState:
         # 无棋可走自动跳过：轮询到下一个有合法走法的玩家
         for _ in range(self.config.players):
             self.current_player = self.current_player % self.config.players + 1
-            if self.legal_moves():
+            if self.legal_actions():
                 return

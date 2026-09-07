@@ -11,13 +11,13 @@ from backend.game.config import (
     MovementConfig,
     PolyJumpConfig,
 )
-from backend.game.moves import MoveGenerator
+from backend.game.movement import ActionGenerator
 
 
 def make_config(
     directions=(6,),
     hop_mode: HopMode = HopMode.FREE_STOP,
-    allow_step: bool = True,
+    allow_single_move: bool = True,
     allow_jump: bool = True,
     allow_chain: bool = True,
 ) -> PolyJumpConfig:
@@ -26,7 +26,7 @@ def make_config(
         players=2,
         direction_set=list(directions),
         movement=MovementConfig(
-            allow_step=allow_step,
+            allow_single_move=allow_single_move,
             allow_jump=allow_jump,
             allow_chain=allow_chain,
             hop_mode=hop_mode,
@@ -39,16 +39,16 @@ def make_empty_board(config: PolyJumpConfig) -> Board:
     return Board(config, setup=False)
 
 
-def test_step_move():
+def test_single_move():
     config = make_config()
     board = make_empty_board(config)
     board.set_piece((0, 0, 0), 1)
 
-    moves = MoveGenerator(config).legal_moves(board, 1)
+    actions = ActionGenerator(config).legal_actions(board, 1)
 
-    assert [(0, 0, 0), (1, 0, 0)] in moves
-    assert [(0, 0, 0), (0, 1, 0)] in moves
-    assert [(0, 0, 0), (0, 0, 1)] in moves
+    assert [(0, 0, 0), (1, 0, 0)] in actions
+    assert [(0, 0, 0), (0, 1, 0)] in actions
+    assert [(0, 0, 0), (0, 0, 1)] in actions
 
 
 def test_single_jump():
@@ -57,9 +57,9 @@ def test_single_jump():
     board.set_piece((0, 0, 0), 1)
     board.set_piece((1, 0, 0), 2)
 
-    moves = MoveGenerator(config).legal_moves(board, 1)
+    actions = ActionGenerator(config).legal_actions(board, 1)
 
-    assert [(0, 0, 0), (2, 0, 0)] in moves
+    assert [(0, 0, 0), (2, 0, 0)] in actions
 
 
 def test_jump_requires_occupied_mid_and_empty_landing():
@@ -69,9 +69,9 @@ def test_jump_requires_occupied_mid_and_empty_landing():
     board.set_piece((1, 0, 0), 2)
     board.set_piece((2, 0, 0), 2)
 
-    moves = MoveGenerator(config).legal_moves(board, 1)
+    actions = ActionGenerator(config).legal_actions(board, 1)
 
-    assert [(0, 0, 0), (2, 0, 0)] not in moves
+    assert [(0, 0, 0), (2, 0, 0)] not in actions
 
 
 def test_chain_jump_free_stop_includes_intermediate():
@@ -81,10 +81,10 @@ def test_chain_jump_free_stop_includes_intermediate():
     board.set_piece((1, 0, 0), 2)
     board.set_piece((3, 0, 0), 2)
 
-    moves = MoveGenerator(config).legal_moves(board, 1)
+    actions = ActionGenerator(config).legal_actions(board, 1)
 
-    assert [(0, 0, 0), (2, 0, 0)] in moves
-    assert [(0, 0, 0), (2, 0, 0), (4, 0, 0)] in moves
+    assert [(0, 0, 0), (2, 0, 0)] in actions
+    assert [(0, 0, 0), (2, 0, 0), (4, 0, 0)] in actions
 
 
 def test_chain_jump_force_all_only_terminal():
@@ -94,19 +94,19 @@ def test_chain_jump_force_all_only_terminal():
     board.set_piece((1, 0, 0), 2)
     board.set_piece((3, 0, 0), 2)
 
-    moves = MoveGenerator(config).legal_moves(board, 1)
+    actions = ActionGenerator(config).legal_actions(board, 1)
 
-    assert [(0, 0, 0), (2, 0, 0)] not in moves
-    assert [(0, 0, 0), (2, 0, 0), (4, 0, 0)] in moves
+    assert [(0, 0, 0), (2, 0, 0)] not in actions
+    assert [(0, 0, 0), (2, 0, 0), (4, 0, 0)] in actions
 
 
-def test_disabled_jump_only_steps():
+def test_disabled_jump_only_single_move_actions():
     config = make_config(allow_jump=False)
     board = make_empty_board(config)
     board.set_piece((0, 0, 0), 1)
     board.set_piece((1, 0, 0), 2)
 
-    moves = MoveGenerator(config).legal_moves(board, 1)
+    actions = ActionGenerator(config).legal_actions(board, 1)
 
-    assert [(0, 0, 0), (2, 0, 0)] not in moves
-    assert [(0, 0, 0), (1, 0, 0)] not in moves  # 被占，不能走
+    assert [(0, 0, 0), (2, 0, 0)] not in actions
+    assert [(0, 0, 0), (1, 0, 0)] not in actions  # 被占，不能走

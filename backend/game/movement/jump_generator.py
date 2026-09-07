@@ -16,10 +16,10 @@ class JumpGenerator:
     def __init__(
         self,
         directions: Sequence[Vector],
-        max_chain_length: int = 0,
+        max_chain_steps: int = 0,
     ):
         self.directions = list(directions)
-        self.max_chain_length = max_chain_length
+        self.max_chain_steps = max_chain_steps
 
     def all_jump_paths(self, board: Board, pos: Point) -> List[Path]:
         # 同一个落点只保留第一条到达路径；已经到达的中间点不再重复展开
@@ -48,7 +48,7 @@ class JumpGenerator:
         seen_lands: set,
     ) -> List[Path]:
         results: List[Path] = []
-        if self.max_chain_length and depth >= self.max_chain_length:
+        if self.max_chain_steps and depth >= self.max_chain_steps:
             return results
 
         current = path[-1]

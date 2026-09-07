@@ -32,7 +32,7 @@ class NewGameRequest(BaseModel):
     config: PolyJumpConfig
 
 
-class MoveRequest(BaseModel):
+class ActionRequest(BaseModel):
     path: List[List[int]]
 
 
@@ -78,17 +78,17 @@ def get_game_history(game_id: str):
     return history_to_dict(state)
 
 
-@app.get("/api/game/{game_id}/legal-moves")
-def legal_moves(game_id: str, piece: Optional[str] = None):
+@app.get("/api/game/{game_id}/legal-actions")
+def legal_actions(game_id: str, piece: Optional[str] = None):
     state = _get_state(game_id)
     if piece:
         try:
             key = tuple(int(x) for x in piece.split(","))
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="piece 格式应为 x,y,z") from exc
-        paths = state.legal_moves_for(key)
+        paths = state.legal_actions_for(key)
     else:
-        paths = state.legal_moves()
+        paths = state.legal_actions()
 
     return {
         "player": state.current_player,
@@ -97,39 +97,39 @@ def legal_moves(game_id: str, piece: Optional[str] = None):
     }
 
 
-@app.post("/api/game/{game_id}/move")
-def move(game_id: str, req: MoveRequest):
+@app.post("/api/game/{game_id}/action")
+def action(game_id: str, req: ActionRequest):
     state = _get_state(game_id)
-    if not state.perform_move(req.path):
+    if not state.perform_action(req.path):
         return JSONResponse(
             status_code=400,
-            content={"ok": False, "error": "illegal move", "state": state_to_dict(state)},
+            content={"ok": False, "error": "illegal action", "state": state_to_dict(state)},
         )
     return {"ok": True, "state": state_to_dict(state)}
 
 
-@app.post("/api/game/{game_id}/ai-move")
-def ai_move(game_id: str, ai_type: str = "distance_graph"):
+@app.post("/api/game/{game_id}/ai-action")
+def ai_action(game_id: str, ai_type: str = "distance_graph"):
     state = _get_state(game_id)
-    paths = state.legal_moves()
+    paths = state.legal_actions()
     if ai_type == "distance_euclidean":
-        selected = EuclideanDistanceAI().select_move(state.board, state.current_player, paths)
+        selected = EuclideanDistanceAI().select_action(state.board, state.current_player, paths)
     elif ai_type == "distance_chebyshev":
-        selected = ChebyshevDistanceAI().select_move(state.board, state.current_player, paths)
+        selected = ChebyshevDistanceAI().select_action(state.board, state.current_player, paths)
     else:
-        selected = GraphDistanceAI().select_move(state.board, state.current_player, paths)
+        selected = GraphDistanceAI().select_action(state.board, state.current_player, paths)
     if selected is None:
         return JSONResponse(
             status_code=400,
-            content={"ok": False, "error": "no legal moves", "state": state_to_dict(state)},
+            content={"ok": False, "error": "no legal actions", "state": state_to_dict(state)},
         )
 
-    if not state.perform_move(selected):
+    if not state.perform_action(selected):
         return JSONResponse(
             status_code=400,
-            content={"ok": False, "error": "illegal AI move", "state": state_to_dict(state)},
+            content={"ok": False, "error": "illegal AI action", "state": state_to_dict(state)},
         )
-    return {"ok": True, "move": path_to_lists(selected), "state": state_to_dict(state)}
+    return {"ok": True, "action": path_to_lists(selected), "state": state_to_dict(state)}
 
 
 # 前端静态文件；API 路由已先注册，此处挂载兜底。

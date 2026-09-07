@@ -19,7 +19,7 @@ def history_to_dict(state: Any) -> Dict[str, Any]:
     return {
         "game_id": state.id,
         "config": state.config.model_dump(),
-        "moves": list(state.move_history),
+        "actions": list(state.action_history),
         "winner": state.winner,
         "initial_pieces": {
             point_key(pos): owner
@@ -36,8 +36,7 @@ def history_to_dict(state: Any) -> Dict[str, Any]:
         "temp_scores": dict(state.temp_scores),
         "round": state.round,
         "action_count": state.action_count,
-        "step_count": state.step_count,
-        "path_stats": summarize_actions(state.move_history),
+        "path_stats": summarize_actions(state.action_history),
     }
 
 
@@ -56,7 +55,6 @@ def state_to_dict(state: Any) -> Dict[str, Any]:
         "winner": state.winner,
         "round": state.round,
         "action_count": state.action_count,
-        "step_count": state.step_count,
         "scores": dict(state.scores),
         "temp_scores": dict(state.temp_scores),
         "bases": {
@@ -67,6 +65,6 @@ def state_to_dict(state: Any) -> Dict[str, Any]:
             str(player): [list(p) for p in target]
             for player, target in board.player_targets.items()
         },
-        "path_stats": summarize_actions(state.move_history),
-        "history": list(state.move_history),
+        "path_stats": summarize_actions(state.action_history),
+        "actions": list(state.action_history),
     }

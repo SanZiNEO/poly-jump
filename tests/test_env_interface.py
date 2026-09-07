@@ -13,7 +13,7 @@ def make_env() -> GameEnv:
     return GameEnv(cfg)
 
 
-def test_env_reset_and_legal_moves():
+def test_env_reset_and_legal_actions():
     env = make_env()
     result = env.reset()
 
@@ -23,28 +23,28 @@ def test_env_reset_and_legal_moves():
     assert len(result.legal_actions) == len(result.legal_paths)
 
 
-def test_env_step_by_path():
+def test_env_execute_action_by_path():
     env = make_env()
     env.reset()
-    first = env.legal_moves()[0]
+    first = env.legal_actions()[0]
 
-    result = env.step(first)
+    result = env.execute_action(first)
     assert result.current_player == 2
-    assert result.last_move is not None
+    assert result.last_action is not None
     assert len(result.legal_paths) >= 0
 
 
-def test_env_step_by_action_id():
+def test_env_execute_action_by_action_id():
     env = make_env()
     env.reset()
 
     action_space = env.action_space()
-    result = env.step(action_space[0]["id"])
-    assert result.last_move is not None
+    result = env.execute_action(action_space[0]["id"])
+    assert result.last_action is not None
 
 
 def test_env_invalid_action_id_raises():
     env = make_env()
     env.reset()
     with pytest.raises(ValueError):
-        env.step(999999)
+        env.execute_action(999999)

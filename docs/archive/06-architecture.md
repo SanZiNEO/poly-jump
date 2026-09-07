@@ -1,4 +1,4 @@
-# PolyJump 项目架构
+﻿# PolyJump 项目架构
 
 ## 1. 总览
 
@@ -25,7 +25,7 @@ poly-jump/
 │       ├── geometry_a.py      # A 模型几何
 │       ├── geometry_b.py      # B 模型几何
 │       ├── board.py           # 棋盘状态
-│       ├── moves.py           # 移动生成 / 跳跃 / 连跳
+│       ├── movement.py           # 移动生成 / 跳跃 / 连跳
 │       ├── rules.py           # 规则开关逻辑
 │       ├── winner.py          # 胜负判定
 │       └── game_state.py      # 单局状态管理
@@ -92,13 +92,13 @@ class Board:
     player_targets: dict[int, set]
 ```
 
-### 3.4 `MoveGenerator`
+### 3.4 `ActionGenerator`
 
 根据配置生成合法移动：
 
 ```python
-class MoveGenerator:
-    def legal_moves(self, board: Board, player: int) -> list[Path]: ...
+class ActionGenerator:
+    def legal_actions(self, board: Board, player: int) -> list[Path]: ...
 ```
 
 返回的是路径列表，不是简单起终点。
@@ -110,7 +110,7 @@ class MoveGenerator:
 ```python
 class Rules:
     def is_legal(self, board, path, player) -> bool: ...
-    def apply_move(self, board, path, player) -> None: ...
+    def apply_action(self, board, path, player) -> None: ...
     def check_winner(self, board) -> int | None: ...
 ```
 
@@ -122,7 +122,7 @@ class Rules:
 class GameState:
     board: Board
     current_player: int
-    move_history: list[MoveRecord]
+    action_history: list[ActionRecord]
     winner: int | None
 ```
 
@@ -137,9 +137,9 @@ class GameState:
 | GET | `/api/config` | 获取前端可配置项 |
 | POST | `/api/game/new` | 创建新对局，返回 game_id |
 | GET | `/api/game/{id}` | 获取当前局面 |
-| GET | `/api/game/{id}/legal-moves` | 获取当前玩家合法路径 |
-| POST | `/api/game/{id}/move` | 提交移动路径 |
-| POST | `/api/game/{id}/ai-move` | 请求 AI 走一步 |
+| GET | `/api/game/{id}/legal-actions` | 获取当前玩家合法路径 |
+| POST | `/api/game/{id}/action` | 提交移动路径 |
+| POST | `/api/game/{id}/ai-action` | 请求 AI 走一步 |
 | GET | `/api/game/{id}/history` | 获取棋谱 |
 
 ### 4.2 请求示例
@@ -162,7 +162,7 @@ POST /api/game/new
 获取合法路径：
 
 ```json
-GET /api/game/{id}/legal-moves
+GET /api/game/{id}/legal-actions
 {
   "player": 1,
   "paths": [
@@ -175,7 +175,7 @@ GET /api/game/{id}/legal-moves
 提交移动：
 
 ```json
-POST /api/game/{id}/move
+POST /api/game/{id}/action
 {
   "path": [[0,0,0], [2,0,0], [4,0,0]]
 }
@@ -201,7 +201,7 @@ POST /api/game/{id}/move
 玩家点击选子
         |
         v
-前端请求 legal-moves
+前端请求 legal-actions
         |
         v
 后端返回合法路径列表
@@ -213,7 +213,7 @@ POST /api/game/{id}/move
 玩家选择一条路径
         |
         v
-前端提交 move
+前端提交 action
         |
         v
 后端校验并更新局面
@@ -263,7 +263,7 @@ POST /api/game/{id}/move
 
 ```python
 class AI:
-    def select_move(self, state: GameState, legal_paths: list[Path]) -> Path:
+    def select_action(self, state: GameState, legal_paths: list[Path]) -> Path:
         ...
 ```
 

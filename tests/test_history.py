@@ -14,13 +14,14 @@ def test_history_records_initial_and_snapshots():
     assert len(state.initial_pieces) == 40
     assert state.snapshots == []
 
-    moves = state.legal_moves()
-    assert state.perform_move(moves[0])
+    actions = state.legal_actions()
+    assert state.perform_action(actions[0])
 
-    assert len(state.move_history) == 1
+    assert len(state.action_history) == 1
     assert len(state.snapshots) == 1
 
     history = history_to_dict(state)
     assert history["winner"] is None
     assert len(history["snapshots"]) == 1
     assert len(history["initial_pieces"]) == 40
+    assert len(history["actions"]) == 1

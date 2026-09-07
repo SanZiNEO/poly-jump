@@ -72,7 +72,7 @@ python run.py
 ### 纯后端运行
 
 ```powershell
-python -m backend.game.headless --config configs/a_2p_6dir.json --moves 10
+python -m backend.game.headless --config configs/a_2p_6dir.json --actions 10
 ```
 
 ### AI 基准评测
@@ -101,14 +101,14 @@ while not obs.done:
     actions = obs.legal_actions
     # 这里接入你的 AI：MCTS / RL / LLM Agent 等
     action = actions[0]
-    obs = env.step(action)
+    obs = env.execute_action(action)
 ```
 
 `ai_research/` 提供不依赖前端的批量评测：
 
 - 5 个随机/距离基线
 - 每局完整记录
-- 胜率、平均步数、目标区进出指标
+- 胜率、action/step 指标、目标区进出指标
 - JSON / CSV / Markdown 汇总输出
 
 ## 目录结构
@@ -119,7 +119,7 @@ backend/
   game/
     config.py            # 配置类
     geometry/            # 几何模型
-    moves/               # 移动生成 / 校验
+    movement/            # 移动生成 / 校验
     rules/               # 规则执行 / 吃子 / 胜负
     env.py               # GameEnv 接口
     scoring.py           # 积分制

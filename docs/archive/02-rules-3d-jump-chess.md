@@ -1,4 +1,4 @@
-# 三维跳棋规则总纲
+﻿# 三维跳棋规则总纲
 
 本文档定义 PolyJump 的三维跳棋规则。  
 所有规则都应映射到配置项，而不是写死。
@@ -284,11 +284,11 @@ B: m -> p
 geometry: A | B
 board_size: (x, y, z)
 direction_set: [vectors]
-allow_step: bool
+allow_single_move: bool
 allow_jump: bool
 allow_chain: bool
 hop_mode: FREE_STOP | FORCE_ALL
-two_step_hop: bool
+two_hop: bool
 capture_mode: NONE | CAPTURE | MIXED
 player_count: int
 initial_layout: 基地形状

@@ -47,7 +47,7 @@ ai_research/
 | `--layers` | `0` | A 模型起始层数；0=自动按最短边 |
 | `--direction-set` | 空 | A 模型方向集，如 `6` 或 `6,12,8` |
 | `--players` | `2` | 玩家人数（2/3/4/6；A 模型支持 8） |
-| `--max-steps` | `2000` | 单局最大步数 |
+| `--max-actions` | `2000` | 单局最大 action 数 |
 | `--seed` | `42` | 随机种子 |
 | `--out` | `ai_research/runs` | 输出根目录 |
 
@@ -66,7 +66,7 @@ ai_research/
 示例：A 模型 2 人局，使用 6 方向，小规模快速测试：
 
 ```powershell
-.poly_jump\Scripts\python.exe -m ai_research.runner --geometry A --size 7,7,7 --direction-set 6 --games 3 --max-steps 500
+.poly_jump\Scripts\python.exe -m ai_research.runner --geometry A --size 7,7,7 --direction-set 6 --games 3 --max-actions 500
 ```
 
 ## 输出说明

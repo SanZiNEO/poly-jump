@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .apply import MoveApplier
+from .apply import ActionApplier
 from .winner import check_winner
 
-__all__ = ["MoveApplier", "check_winner"]
+__all__ = ["ActionApplier", "check_winner"]

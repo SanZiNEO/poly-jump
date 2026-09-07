@@ -1,4 +1,4 @@
-# 可选小 AI 实现
+﻿# 可选小 AI 实现
 
 本文档是可选内容，不是项目主线。  
 项目主线是“可玩的三维跳棋游戏框架”。  
@@ -26,7 +26,7 @@
 
 ```python
 class RandomAI:
-    def select_move(self, legal_paths):
+    def select_action(self, legal_paths):
         return random.choice(legal_paths)
 ```
 
@@ -36,7 +36,7 @@ class RandomAI:
 
 ```python
 class GreedyAI:
-    def select_move(self, board, player, legal_paths):
+    def select_action(self, board, player, legal_paths):
         return max(
             legal_paths,
             key=lambda path: progress_gain(board, player, path)
@@ -73,7 +73,7 @@ board 状态
 
 ```python
 class AI:
-    def select_move(self, board, player, legal_paths):
+    def select_action(self, board, player, legal_paths):
         ...
 ```
 

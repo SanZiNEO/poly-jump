@@ -48,13 +48,13 @@ def test_action_space_includes_path_metrics():
         assert action["step_count"] == len(action["path"]) - 1
 
 
-def test_move_history_includes_path_metrics():
+def test_action_history_includes_path_metrics():
     cfg = PolyJumpConfig(board_size=(9, 9, 9), players=2, direction_set=[6])
     state = GameState(cfg)
-    moves = state.legal_moves()
+    actions = state.legal_actions()
 
-    assert state.perform_move(moves[0])
-    entry = state.move_history[0]
+    assert state.perform_action(actions[0])
+    entry = state.action_history[0]
     assert entry["step_count"] == len(entry["path"]) - 1
     assert "straight_distance" in entry
     assert "path_distance" in entry
@@ -64,8 +64,8 @@ def test_move_history_includes_path_metrics():
 def test_state_dict_path_stats_and_action_count():
     cfg = PolyJumpConfig(board_size=(9, 9, 9), players=2, direction_set=[6])
     state = GameState(cfg)
-    moves = state.legal_moves()
-    state.perform_move(moves[0])
+    actions = state.legal_actions()
+    state.perform_action(actions[0])
 
     data = state_to_dict(state)
     assert data["action_count"] == 1
@@ -75,11 +75,11 @@ def test_state_dict_path_stats_and_action_count():
     assert stats["players"]["1"]["action_count"] == 1
 
 
-def test_step_result_exposes_path_summary():
+def test_action_result_exposes_path_summary():
     cfg = PolyJumpConfig(board_size=(9, 9, 9), players=2, direction_set=[6])
     env = GameEnv(cfg)
     env.reset()
-    result = env.step(env.legal_moves()[0])
+    result = env.execute_action(env.legal_actions()[0])
 
     assert result.action_count == 1
     assert result.total_steps >= 1

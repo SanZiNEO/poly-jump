@@ -8,7 +8,7 @@ PolyJump 本身是游戏，不包含 AI 训练逻辑。
 游戏内置三种纯距离导向 AI（由 `ai_research` 基准评测筛选）：
 
 - GraphDistanceAI（默认）
-  - 使用真实图距离 BFS 评估到目标区的最少步数
+  - 使用真实图距离 BFS 评估到目标区的最少边数（图距离）
   - 只以“把棋子送进目标区”为目标，不读取计分
 - EuclideanDistanceAI
   - 使用三维欧氏距离选择靠近目标区的走法
@@ -35,12 +35,12 @@ env = GameEnv(config)
 result = env.reset()
 while not result.done:
     action = my_agent.choose(result.legal_actions)
-    result = env.step(action)
+    result = env.execute_action(action)
 ```
 
 ## 积分接口
 
-`StepResult` 提供：
+`ActionResult` 提供：
 
 ```text
 scores
@@ -88,5 +88,5 @@ total_path_distance
 ## 头less
 
 ```powershell
-python -m backend.game.headless --config configs\a_2p_6dir.json --moves 10
+python -m backend.game.headless --config configs\a_2p_6dir.json --actions 10
 ```

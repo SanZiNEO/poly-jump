@@ -1,4 +1,4 @@
-# PolyJump 配置与规则开关
+﻿# PolyJump 配置与规则开关
 
 所有规则都是配置项。本文档定义完整配置结构。
 
@@ -30,12 +30,12 @@
   "direction_set": [6, 12, 8],
   "custom_vectors": [],
   "movement": {
-    "allow_step": true,
+    "allow_single_move": true,
     "allow_jump": true,
     "allow_chain": true,
     "hop_mode": "FREE_STOP",
-    "two_step_hop": false,
-    "max_chain_length": 0
+    "two_hop": false,
+    "max_chain_steps": 0
   },
   "capture": {
     "mode": "NONE",
@@ -56,7 +56,7 @@
   },
   "rules": {
     "pass_allowed": false,
-    "draw_when_no_moves": false,
+    "draw_when_no_actions": false,
     "first_to_finish_wins": true
   },
   "render": {
@@ -160,12 +160,12 @@ GET /api/direction-sets
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
-| `allow_step` | bool | 是否允许普通走一步 |
+| `allow_single_move` | bool | 是否允许普通走一步 |
 | `allow_jump` | bool | 是否允许跳跃 |
 | `allow_chain` | bool | 是否允许连跳 |
 | `hop_mode` | enum | `FREE_STOP` 或 `FORCE_ALL` |
-| `two_step_hop` | bool | 是否允许空一格跳 |
-| `max_chain_length` | int | 0 = 不限制；正整数 = 最大连跳次数 |
+| `two_hop` | bool | 是否允许空一格跳 |
+| `max_chain_steps` | int | 0 = 不限制；正整数 = 最大连跳次数 |
 
 ### 6.1 连跳模式
 
@@ -253,12 +253,12 @@ from typing import Literal, List, Tuple
 
 @dataclass
 class MovementConfig:
-    allow_step: bool = True
+    allow_single_move: bool = True
     allow_jump: bool = True
     allow_chain: bool = True
     hop_mode: Literal["FREE_STOP", "FORCE_ALL"] = "FREE_STOP"
-    two_step_hop: bool = False
-    max_chain_length: int = 0
+    two_hop: bool = False
+    max_chain_steps: int = 0
 
 
 @dataclass

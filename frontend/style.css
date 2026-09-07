@@ -327,7 +327,7 @@ canvas {
   padding-bottom: 6px;
 }
 
-#history-moves {
+#history-actions {
   overflow-y: auto;
   flex: 1;
   font-size: 12px;
@@ -335,17 +335,17 @@ canvas {
   max-height: 50vh;
 }
 
-#history-moves .move-item {
+#history-actions .action-item {
   padding: 2px 4px;
   border-radius: 4px;
   cursor: pointer;
 }
 
-#history-moves .move-item:nth-child(odd) {
+#history-actions .action-item:nth-child(odd) {
   background: #f7f7f7;
 }
 
-#history-moves .move-item.current {
+#history-actions .action-item.current {
   outline: 2px solid #000;
   background: #eeeeee;
 }

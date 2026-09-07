@@ -10,31 +10,31 @@ from backend.game.config import (
     PolyJumpConfig,
 )
 from backend.game.game_state import GameState
-from backend.game.moves import MoveGenerator
+from backend.game.movement import ActionGenerator
 from backend.game.rules.capture import CaptureHandler
 from backend.game.rules.winner import check_winner
 
 
-def test_two_step_hop():
+def test_two_hop():
     cfg = PolyJumpConfig(
         board_size=(7, 7, 7),
         players=2,
         direction_set=[6],
         movement=MovementConfig(
-            allow_step=False,
+            allow_single_move=False,
             allow_jump=False,
             allow_chain=False,
-            two_step_hop=True,
+            two_hop=True,
         ),
     )
     board = Board(cfg, setup=False)
     board.set_piece((0, 0, 0), 1)
     board.set_piece((2, 0, 0), 2)
 
-    moves = MoveGenerator(cfg).legal_moves(board, 1)
+    actions = ActionGenerator(cfg).legal_actions(board, 1)
 
     # p(0)->空(1)->子(2)->空(3)->空(4)
-    assert [(0, 0, 0), (4, 0, 0)] in moves
+    assert [(0, 0, 0), (4, 0, 0)] in actions
 
 
 def test_capture_win_when_all_opponents_gone():
@@ -76,13 +76,13 @@ def test_mixed_capture_returns_piece_to_own_base():
     assert board.get_piece((2, 0, 0)) == 2
 
 
-def test_no_move_auto_skip_to_next_player():
+def test_no_action_auto_skip_to_next_player():
     cfg = PolyJumpConfig(
         board_size=(9, 9, 9),
         players=2,
         direction_set=[6],
         movement=MovementConfig(
-            allow_step=True,
+            allow_single_move=True,
             allow_jump=False,
             allow_chain=False,
         ),

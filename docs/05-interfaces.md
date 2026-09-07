@@ -14,19 +14,17 @@ python -m uvicorn backend.app:app --reload
 | GET | `/api/direction-sets` | 方向规则 |
 | POST | `/api/game/new` | 创建对局 |
 | GET | `/api/game/{id}` | 当前局面 |
-| GET | `/api/game/{id}/legal-moves` | 合法路径 |
-| POST | `/api/game/{id}/move` | 执行移动 |
-| POST | `/api/game/{id}/ai-move` | AI 走一步（默认 graph_progress） |
+| GET | `/api/game/{id}/legal-actions` | 合法 action 路径 |
+| POST | `/api/game/{id}/action` | 执行 action |
+| POST | `/api/game/{id}/ai-action` | AI 执行一次 action（默认 distance_graph） |
 | GET | `/api/game/{id}/history` | 棋谱/回放 |
 
-`ai-move` 支持：
+`ai-action` 支持：
 
 ```text
-ai_type=scoring_aware   # 默认，读取积分配置
-ai_type=graph_progress  # 图距离贪心
-ai_type=progress        # 连跳奖励贪心
-ai_type=greedy          # 简单贪心
-ai_type=random          # 随机
+ai_type=distance_graph       # 图距离 BFS
+ai_type=distance_euclidean   # 欧氏距离
+ai_type=distance_chebyshev   # 切比雪夫距离
 ```
 
 ## 2. Python GameEnv
@@ -38,27 +36,27 @@ env = GameEnv(config)
 result = env.reset()
 
 actions = env.action_space()
-result = env.step(actions[0]["id"])
+result = env.execute_action(actions[0]["id"])
 ```
 
 ### 方法
 
 ```text
 reset()
-legal_moves()
+legal_actions()
 action_space()
-step(action)
+execute_action(action)
 observe()
 state_dict()
 ```
 
-### StepResult
+### ActionResult
 
 ```text
 game_id
 current_player
 winner
-last_move
+last_action
 legal_paths
 legal_actions
 done
@@ -76,12 +74,12 @@ total_path_distance
 ## 3. Headless
 
 ```powershell
-python -m backend.game.headless --config configs\a_2p_6dir.json --moves 10
+python -m backend.game.headless --config configs\a_2p_6dir.json --actions 10
 ```
 
 - 加载配置
 - 自动创建 GameState
-- 可选随机走 N 步
+- 可选自动执行 N 个 action
 - 输出最终结果
 
 ## 4. 棋谱接口
@@ -91,15 +89,17 @@ python -m backend.game.headless --config configs\a_2p_6dir.json --moves 10
 ```text
 game_id
 config
-moves
+actions
 initial_pieces
 snapshots
 scores
 temp_scores
 winner
+action_count
+path_stats
 ```
 
-每一步 move 包含：
+每个 action 包含：
 
 ```text
 player
@@ -107,6 +107,10 @@ path
 scoring
 scores
 temp_scores
+step_count
+straight_distance
+path_distance
+step_distances
 ```
 
 ## 5. 外部 AI 接入方式
@@ -116,5 +120,5 @@ env = GameEnv(config)
 result = env.reset()
 while not result.done:
     action = my_agent.choose(result.legal_actions)
-    result = env.step(action)
+    result = env.execute_action(action)
 ```
