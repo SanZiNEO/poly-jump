@@ -58,7 +58,7 @@ class PolyJumpConfig:
 ```python
 class Geometry:
     def generate_points(self): ...
-    def generate_routes(self, direction_set): ...
+    def generate_edges(self, direction_set): ...
     def is_inside(self, pos): ...
     def neighbors(self, pos, direction_set): ...
 ```
@@ -161,10 +161,10 @@ points.forEach(p => {
 ### 3.2 渲染路线
 
 ```javascript
-routes.forEach(route => {
+edges.forEach(edge => {
     const geometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(...route.from),
-        new THREE.Vector3(...route.to)
+        new THREE.Vector3(...edge.from),
+        new THREE.Vector3(...edge.to)
     ]);
     const material = new THREE.LineBasicMaterial({
         color: 0x88ff88,

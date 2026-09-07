@@ -109,7 +109,7 @@ class ExternalPyramidGeometry(Geometry):
     def is_inside(self, pos: Point) -> bool:
         return tuple(pos) in set(self.generate_points())
 
-    def generate_routes(
+    def generate_edges(
         self, directions: Optional[List[Vector]] = None
     ) -> List[dict]:
         if directions is None:
@@ -117,7 +117,7 @@ class ExternalPyramidGeometry(Geometry):
 
         points = set(self.generate_points())
         seen = set()
-        routes: List[dict] = []
+        edges: List[dict] = []
         for p in points:
             for v in directions:
                 q = add_vec(p, v)
@@ -127,8 +127,8 @@ class ExternalPyramidGeometry(Geometry):
                 if key in seen:
                     continue
                 seen.add(key)
-                routes.append({"from": list(p), "to": list(q), "type": _type(v)})
-        return routes
+                edges.append({"from": list(p), "to": list(q), "type": _type(v)})
+        return edges
 
     def player_assignments(
         self,

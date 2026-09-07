@@ -61,8 +61,8 @@
   },
   "render": {
     "show_points": true,
-    "show_routes": true,
-    "route_colors": {},
+    "show_edges": true,
+    "edge_colors": {},
     "point_size": 1.0,
     "line_opacity": 0.3
   }
@@ -236,8 +236,8 @@ B_TIP_PYRAMID   = B 模型尖端基地：1+4+9+... 共 R/2 层
 | 字段 | 说明 |
 |---|---|
 | `show_points` | 是否显示点 |
-| `show_routes` | 是否显示路线 |
-| `route_colors` | 不同方向类型颜色 |
+| `show_edges` | 是否显示路线 |
+| `edge_colors` | 不同方向类型颜色 |
 | `point_size` | 点大小 |
 | `line_opacity` | 线的透明度 |
 | `camera` | 初始相机参数 |

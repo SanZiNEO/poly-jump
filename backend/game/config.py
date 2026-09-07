@@ -57,8 +57,8 @@ class InitialLayoutConfig(BaseModel):
 
 class RenderConfig(BaseModel):
     show_points: bool = True
-    show_routes: bool = True
-    route_colors: dict = Field(default_factory=dict)
+    show_edges: bool = True
+    edge_colors: dict = Field(default_factory=dict)
     point_size: float = 1.0
     line_opacity: float = 0.3
 

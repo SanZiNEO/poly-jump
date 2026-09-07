@@ -1,4 +1,4 @@
-"""A 模型路线构建：从点集和方向列表生成前端渲染用路线。"""
+"""A 模型边构建：从点集和方向列表生成前端渲染用边。"""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from ..directions import Vector, add_vec, vector_type
 from .base import Point
 
 
-class RouteBuilder:
+class EdgeBuilder:
     def __init__(self, geometry):
         self.geometry = geometry
 
     def build(self, directions: Sequence[Vector]) -> List[dict]:
         points = self.geometry.generate_points()
         seen = set()
-        routes: List[dict] = []
+        edges: List[dict] = []
         for p in points:
             for v in directions:
                 q = add_vec(p, v)
@@ -25,11 +25,11 @@ class RouteBuilder:
                 if key in seen:
                     continue
                 seen.add(key)
-                routes.append(
+                edges.append(
                     {
                         "from": list(p),
                         "to": list(q),
                         "type": vector_type(v),
                     }
                 )
-        return routes
+        return edges

@@ -14,7 +14,7 @@ const state = {
   controls: null,
   pointGroup: null,
   pieceGroup: null,
-  routeGroup: null,
+  edgeGroup: null,
   frontPointGroup: null,
   highlightGroup: null,
   interactedMeshes: [],
@@ -46,7 +46,7 @@ const PLAYER_COLORS = {
 };
 
 // 棋盘背景/点保持黑白；网格线用极淡灰 + 轻微方向色差
-const ROUTE_COLORS = {
+const EDGE_COLORS = {
   axis6: 0xc3cdd8,
   face12: 0xc3d8c3,
   body8: 0xd2c3d8,
@@ -110,13 +110,13 @@ function setupRenderer() {
 
   const pointGroup = new THREE.Group();
   const pieceGroup = new THREE.Group();
-  const routeGroup = new THREE.Group();
+  const edgeGroup = new THREE.Group();
   const frontPointGroup = new THREE.Group();
   const highlightGroup = new THREE.Group();
-  scene.add(pointGroup, routeGroup, frontPointGroup, pieceGroup, highlightGroup);
+  scene.add(pointGroup, edgeGroup, frontPointGroup, pieceGroup, highlightGroup);
 
   // 每帧绘制顺序：路线 → 点阵 → 重复点阵 → 小球 → 高亮
-  routeGroup.renderOrder = 0;
+  edgeGroup.renderOrder = 0;
   pointGroup.renderOrder = 1;
   frontPointGroup.renderOrder = 2;
   pieceGroup.renderOrder = 3;
@@ -128,7 +128,7 @@ function setupRenderer() {
   state.controls = controls;
   state.pointGroup = pointGroup;
   state.pieceGroup = pieceGroup;
-  state.routeGroup = routeGroup;
+  state.edgeGroup = edgeGroup;
   state.frontPointGroup = frontPointGroup;
   state.highlightGroup = highlightGroup;
 
@@ -226,40 +226,40 @@ function buildBasePointCloud(points, color) {
   return new THREE.Points(geo, mat);
 }
 
-// 同类型路线合并为一个 LineSegments，每个方向组只占一次 draw call
-function rebuildRoutes(routes) {
+// 同类型边合并为一个 LineSegments，每个方向组只占一次 draw call
+function rebuildEdges(edges) {
   const byType = {};
-  routes.forEach((route) => {
-    const type = route.type || "custom";
+  edges.forEach((edge) => {
+    const type = edge.type || "custom";
     if (!byType[type]) byType[type] = [];
-    byType[type].push(route);
+    byType[type].push(edge);
   });
 
   Object.entries(byType).forEach(([type, list]) => {
     const positions = [];
-    list.forEach((route) => {
-      positions.push(route.from[0], route.from[1], route.from[2]);
-      positions.push(route.to[0], route.to[1], route.to[2]);
+    list.forEach((edge) => {
+      positions.push(edge.from[0], edge.from[1], edge.from[2]);
+      positions.push(edge.to[0], edge.to[1], edge.to[2]);
     });
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     const mat = new THREE.LineBasicMaterial({
-      color: ROUTE_COLORS[type] || 0xcccccc,
+      color: EDGE_COLORS[type] || 0xcccccc,
       transparent: true,
       opacity: 0.18,
     });
-    state.routeGroup.add(new THREE.LineSegments(geo, mat));
+    state.edgeGroup.add(new THREE.LineSegments(geo, mat));
   });
 }
 
 function renderBoard(board) {
   clearGroup(state.pointGroup);
   clearGroup(state.pieceGroup);
-  clearGroup(state.routeGroup);
+  clearGroup(state.edgeGroup);
   clearGroup(state.frontPointGroup);
   clearGroup(state.highlightGroup);
 
-  rebuildRoutes(board.routes || []);
+  rebuildEdges(board.edges || []);
 
   const bases = board.bases || {};
   const baseKeys = new Set();

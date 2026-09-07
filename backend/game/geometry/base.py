@@ -18,8 +18,8 @@ class Geometry(ABC):
         """生成合法点集。"""
 
     @abstractmethod
-    def generate_routes(self, directions: Sequence[Vector] | None = None) -> List[dict]:
-        """生成用于前端渲染的路线列表。"""
+    def generate_edges(self, directions: Sequence[Vector] | None = None) -> List[dict]:
+        """生成用于前端渲染的边（connections）列表。"""
 
     @abstractmethod
     def is_inside(self, pos: Point) -> bool:

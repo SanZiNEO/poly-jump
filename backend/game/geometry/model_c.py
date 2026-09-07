@@ -49,7 +49,7 @@ class GeometryC(Geometry):
         x, y, z = pos
         return abs(x) + abs(y) + abs(z) <= self.R
 
-    def generate_routes(
+    def generate_edges(
         self, directions: Sequence[Vector] | None = None
     ) -> List[dict]:
         if directions is None:
@@ -57,7 +57,7 @@ class GeometryC(Geometry):
 
         points = set(self.generate_points())
         seen = set()
-        routes: List[dict] = []
+        edges: List[dict] = []
         for p in points:
             for v in directions:
                 q = add_vec(p, v)
@@ -68,14 +68,14 @@ class GeometryC(Geometry):
                     continue
                 seen.add(key)
                 nz = sum(1 for c in v if c != 0)
-                routes.append(
+                edges.append(
                     {
                         "from": list(p),
                         "to": list(q),
                         "type": "body8" if nz == 3 else "face12",
                     }
                 )
-        return routes
+        return edges
 
     def player_assignments(
         self,

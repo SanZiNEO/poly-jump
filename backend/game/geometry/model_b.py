@@ -61,7 +61,7 @@ class GeometryB(Geometry):
             and (x + y + z) % 2 == 0
         )
 
-    def generate_routes(
+    def generate_edges(
         self, directions: Sequence[Vector] | None = None
     ) -> List[dict]:
         if directions is None:
@@ -69,7 +69,7 @@ class GeometryB(Geometry):
 
         points = set(self.generate_points())
         seen = set()
-        routes: List[dict] = []
+        edges: List[dict] = []
         for p in points:
             for v in directions:
                 q = add_vec(p, v)
@@ -79,14 +79,14 @@ class GeometryB(Geometry):
                 if key in seen:
                     continue
                 seen.add(key)
-                routes.append(
+                edges.append(
                     {
                         "from": list(p),
                         "to": list(q),
                         "type": "face12",
                     }
                 )
-        return routes
+        return edges
 
     def player_assignments(
         self,

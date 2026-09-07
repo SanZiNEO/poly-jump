@@ -12,7 +12,7 @@ from typing import Dict, List, Sequence, Tuple
 from ..config import PolyJumpConfig
 from ..directions import Vector, resolve_direction_set
 from .base import Geometry, Point
-from .route_builder import RouteBuilder
+from .edge_builder import EdgeBuilder
 
 
 class GeometryA(Geometry):
@@ -44,14 +44,14 @@ class GeometryA(Geometry):
         x, y, z = pos
         return 0 <= x < self.a and 0 <= y < self.b and 0 <= z < self.c
 
-    def generate_routes(
+    def generate_edges(
         self, directions: Sequence[Vector] | None = None
     ) -> List[dict]:
         if directions is None:
             directions = resolve_direction_set(
                 self.config.direction_set, self.config.custom_vectors
             )
-        return RouteBuilder(self).build(directions)
+        return EdgeBuilder(self).build(directions)
 
     def player_assignments(
         self,

@@ -29,11 +29,11 @@ def get_targets(state: dict) -> Dict[int, Set[Point]]:
 
 
 def build_adjacency(state: dict) -> Dict[Point, Set[Point]]:
-    """用 state_dict 中的 routes 构建无向图邻接表。"""
+    """用 state_dict 中的 edges 构建无向图邻接表。"""
     adj: Dict[Point, Set[Point]] = {}
-    for route in state.get("routes", []):
-        a = tuple_point(route["from"])
-        b = tuple_point(route["to"])
+    for edge in state.get("edges", []):
+        a = tuple_point(edge["from"])
+        b = tuple_point(edge["to"])
         adj.setdefault(a, set()).add(b)
         adj.setdefault(b, set()).add(a)
     # 保证所有合法点都在映射里（孤立点至少给自己一个空集合）

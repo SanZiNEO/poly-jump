@@ -199,7 +199,7 @@ const gameState = {
 ```json
 {
   "points": [[x, y, z], ...],
-  "routes": [{
+  "edges": [{
     "from": [x, y, z],
     "to": [x, y, z],
     "type": "axis6" | "face12" | "body8" | "custom"

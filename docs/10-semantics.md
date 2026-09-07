@@ -2,17 +2,17 @@
 
 本文档补充 PolyJump 中除 `action / step` 之外容易产生歧义的语义定义。
 
-## 1. path 与 routes
+## 1. path 与 edges
 
 | 名称 | 含义 |
 |---|---|
 | `path` | 一次 action 的完整移动序列，例如 `[a, b, c]` |
-| `routes` | 几何图上的线段/边，用于前端渲染，每项包含 `from / to / type` |
+| `edges` | 几何图上的边，用于前端渲染，每项包含 `from / to / type` |
 
 它们不是同一个东西：
 
 - `path` 是“一次操作里棋子实际走的路线”
-- `routes` 是“棋盘上所有允许连接的边”
+- `edges` 是“棋盘上所有允许连接的边”
 
 ## 2. 移动类型
 

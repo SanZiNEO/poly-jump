@@ -46,7 +46,7 @@ def state_to_dict(state: Any) -> Dict[str, Any]:
         "game_id": state.id,
         "config": state.config.model_dump(),
         "points": [list(p) for p in board.points],
-        "routes": board.geometry.generate_routes(),
+        "edges": board.geometry.generate_edges(),
         "pieces": {
             point_key(pos): owner
             for pos, owner in board.pieces.items()
