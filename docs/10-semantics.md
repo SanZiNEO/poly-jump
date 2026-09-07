@@ -1,6 +1,6 @@
 # 语义说明（Semantics）
 
-本文档补充 PolyJump 中除 `action / step` 之外容易产生歧义的语义定义。
+本文档说明 PolyJump 中除 `action / step` 之外的语义定义。
 
 ## 1. path 与 edges
 
