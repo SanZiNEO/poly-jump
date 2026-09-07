@@ -33,15 +33,14 @@ Model A · 8 players
 
 ![Model A, 8 players](assets/gifs/A-8P.gif)
 
-## A Preliminary Finding
+## Experiment Record
 
-The same MCTS search algorithm behaves systematically differently on A / B / C / D geometry models:
+Small-sample data for the same MCTS search algorithm on A / B / C / D geometry models:
 
-- **A / D**: MCTS tends to find shorter paths
-- **B / C**: MCTS tends to take longer chain jumps, with higher `detour`
+- **A / D**: lower average path
+- **B / C**: higher average detour
 
-This suggests that geometry itself affects an AI's spatial planning strategy.  
-See [docs/11-cross-geometry-discovery.md](./docs/11-cross-geometry-discovery.md) for the full report.
+See [docs/11-cross-geometry-discovery.md](./docs/11-cross-geometry-discovery.md) for the full data.
 
 ## Features
 
