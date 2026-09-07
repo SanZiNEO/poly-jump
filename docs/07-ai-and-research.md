@@ -71,9 +71,29 @@ total_path_distance
 
 详细定义见 [09-path-metrics.md](./09-path-metrics.md)。
 
+## PettingZoo 包装
+
+`ai_research/pettingzoo_env.py` 提供 `PolyJumpAECEnv`：
+
+- `full_action`：一次环境 step = 一条完整路径 action
+- `primitive`：一次环境 step = 一个最小移动 step
+
+```python
+from ai_research.pettingzoo_env import PolyJumpAECEnv
+
+env = PolyJumpAECEnv(config, action_mode="full_action")
+```
+
+依赖：
+
+```text
+gymnasium
+pettingzoo
+```
+
 ## 后续可扩展（不内置）
 
-- MCTS / UCT
+- MCTS / UCT（已提供 MCTSAgent baseline）
 - 小神经网络
 - RL / 自博弈
 

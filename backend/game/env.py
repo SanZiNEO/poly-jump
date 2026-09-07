@@ -92,5 +92,11 @@ class GameEnv:
             total_path_distance=float(summary["total_path_distance"]),
         )
 
+    def clone(self) -> "GameEnv":
+        """返回当前环境的深拷贝，用于搜索/模拟。"""
+        new_env = GameEnv(self.config)
+        new_env.state = self.state.clone()
+        return new_env
+
     def state_dict(self) -> dict:
         return state_to_dict(self.state)

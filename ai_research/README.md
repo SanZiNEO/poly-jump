@@ -21,7 +21,9 @@ ai_research/
 │   ├── manhattan_ai/            # 曼哈顿距离贪心
 │   ├── euclidean_ai/            # 欧氏距离贪心
 │   ├── chebyshev_ai/            # 切比雪夫距离贪心
-│   └── graph_bfs_ai/            # 图距离 BFS 贪心
+│   ├── graph_bfs_ai/            # 图距离 BFS 贪心
+│   └── mcts_ai/                 # MCTS 搜索 baseline
+├── pettingzoo_env.py            # PettingZoo AEC 包装
 ├── metrics.py                   # 指标计算与汇总
 ├── runner.py                    # 批量评测入口
 └── runs/                        # 实验结果（按时间戳归档，已 gitignore）
@@ -39,7 +41,7 @@ ai_research/
 
 | 参数 | 默认 | 说明 |
 |---|---|---|
-| `--agents` | `random,manhattan,euclidean,chebyshev,graph_bfs` | 参与评测的 AI |
+| `--agents` | `random,manhattan,euclidean,chebyshev,graph_bfs` | 参与评测的 AI，可用 `mcts` |
 | `--games` | `10` | 每局组合各跑多少局 |
 | `--geometry` | `B` | 几何模型：`A` / `B` |
 | `--radius` | `6` | B 模型半径 R |
@@ -67,6 +69,28 @@ ai_research/
 
 ```powershell
 .poly_jump\Scripts\python.exe -m ai_research.runner --geometry A --size 7,7,7 --direction-set 6 --games 3 --max-actions 500
+```
+
+## PettingZoo
+
+`ai_research/pettingzoo_env.py` 提供 `PolyJumpAECEnv`：
+
+```python
+from ai_research.pettingzoo_env import PolyJumpAECEnv
+
+env = PolyJumpAECEnv(config, action_mode="full_action")
+```
+
+支持：
+
+- `full_action`：一次环境 step = 一条完整路径 action
+- `primitive`：一次环境 step = 一个最小移动 step
+
+依赖：
+
+```text
+gymnasium
+pettingzoo
 ```
 
 ## 输出说明

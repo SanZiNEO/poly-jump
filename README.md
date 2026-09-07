@@ -106,7 +106,8 @@ while not obs.done:
 
 `ai_research/` 提供不依赖前端的批量评测：
 
-- 5 个随机/距离基线
+- 随机/距离基线 + MCTS 搜索 baseline
+- PettingZoo AEC 包装（full_action / primitive）
 - 每局完整记录
 - 胜率、action/step 指标、目标区进出指标
 - JSON / CSV / Markdown 汇总输出

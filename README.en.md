@@ -106,7 +106,8 @@ while not obs.done:
 
 The `ai_research/` directory provides a frontend-free batch benchmark:
 
-- 5 random/distance baselines
+- Random/distance baselines + MCTS search baseline
+- PettingZoo AEC wrapper (full_action / primitive)
 - Full per-game records
 - Win rate, average actions, target-zone metrics
 - JSON / CSV / Markdown summaries

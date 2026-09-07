@@ -48,3 +48,15 @@ def test_env_invalid_action_id_raises():
     env.reset()
     with pytest.raises(ValueError):
         env.execute_action(999999)
+
+
+def test_env_clone_is_independent():
+    env = make_env()
+    env.reset()
+
+    clone = env.clone()
+    assert clone.state.action_count == env.state.action_count
+
+    clone.execute_action(clone.legal_actions()[0])
+    assert clone.state.action_count == env.state.action_count + 1
+    assert env.state.action_count == 0

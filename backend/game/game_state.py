@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import uuid
 from typing import List, Optional, Sequence
 
@@ -107,6 +108,10 @@ class GameState:
         if self.winner is None:
             self._advance_turn()
         return True
+
+    def clone(self) -> "GameState":
+        """深拷贝当前状态，用于搜索/模拟。"""
+        return copy.deepcopy(self)
 
     def _advance_turn(self) -> None:
         # 无棋可走自动跳过：轮询到下一个有合法走法的玩家

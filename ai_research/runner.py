@@ -48,6 +48,7 @@ from .agents.manhattan_ai import ManhattanAgent
 from .agents.euclidean_ai import EuclideanAgent
 from .agents.chebyshev_ai import ChebyshevAgent
 from .agents.graph_bfs_ai import GraphBFSAgent
+from .agents.mcts_ai import MCTSAgent
 from .metrics import aggregate_matches, analyze_match
 
 AGENT_REGISTRY: Dict[str, Type[Agent]] = {
@@ -56,6 +57,7 @@ AGENT_REGISTRY: Dict[str, Type[Agent]] = {
     "euclidean": EuclideanAgent,
     "chebyshev": ChebyshevAgent,
     "graph_bfs": GraphBFSAgent,
+    "mcts": MCTSAgent,
 }
 
 DEFAULT_AGENTS = ",".join(AGENT_REGISTRY.keys())

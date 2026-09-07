@@ -1,0 +1,46 @@
+"""PolyJump PettingZoo AEC 包装测试。"""
+
+from __future__ import annotations
+
+import pytest
+
+pytest.importorskip("pettingzoo")
+
+from backend.game.config import PolyJumpConfig  # noqa: E402
+from ai_research.pettingzoo_env import PolyJumpAECEnv  # noqa: E402
+
+
+def make_config() -> PolyJumpConfig:
+    return PolyJumpConfig(
+        board_size=(9, 9, 9),
+        players=2,
+        direction_set=[6],
+    )
+
+
+def test_full_action_mode_legal_and_step():
+    env = PolyJumpAECEnv(make_config(), action_mode="full_action")
+    env.reset()
+
+    agent = env.agent_selection
+    legal = env.legal_actions(agent)
+    assert len(legal) > 0
+
+    obs = env.observe(agent)
+    assert obs is not None
+    assert len(obs) > 0
+
+    env.step(0)
+    assert env.terminations[agent] is False or env.terminations[agent] is True
+
+
+def test_primitive_mode_returns_single_step_actions():
+    env = PolyJumpAECEnv(make_config(), action_mode="primitive")
+    env.reset()
+
+    agent = env.agent_selection
+    legal = env.legal_actions(agent)
+    assert len(legal) > 0
+
+    for action in legal:
+        assert len(action) == 2
