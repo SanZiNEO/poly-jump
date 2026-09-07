@@ -33,6 +33,16 @@ A 模型 · 8 人局
 
 ![A 模型 8 人局](assets/gifs/A-8P.gif)
 
+## 一个初步发现
+
+同一个 MCTS 搜索算法放在 A / B / C / D 四种几何模型上，路径选择会系统性不同：
+
+- **A / D**：MCTS 更容易找到更短路径
+- **B / C**：MCTS 更容易走长连跳，`detour` 更高
+
+这说明几何结构本身就会影响 AI 的空间规划策略。  
+完整实验报告见 [docs/11-cross-geometry-discovery.md](./docs/11-cross-geometry-discovery.md)。
+
 ## 功能
 
 | 类别 | 内容 |
