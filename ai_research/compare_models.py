@@ -30,12 +30,16 @@ from backend.game.config import (
     ScoringConfig,
 )
 from backend.game.env import GameEnv
+from .agents.chebyshev_ai import ChebyshevAgent
+from .agents.euclidean_ai import EuclideanAgent
 from .agents.graph_bfs_ai import GraphBFSAgent
 from .agents.mcts_ai import MCTSAgent
 from .agents.random_ai import RandomAgent
 
 AGENTS = {
     "random": lambda: RandomAgent(),
+    "euclidean": lambda: EuclideanAgent(),
+    "chebyshev": lambda: ChebyshevAgent(),
     "graph_bfs": lambda: GraphBFSAgent(),
     "mcts": lambda sims: MCTSAgent(simulations=sims, max_depth=30),
 }
@@ -115,6 +119,8 @@ def play(
     env.reset()
     agents = {
         "random": AGENTS["random"](),
+        "euclidean": AGENTS["euclidean"](),
+        "chebyshev": AGENTS["chebyshev"](),
         "graph_bfs": AGENTS["graph_bfs"](),
         "mcts": AGENTS["mcts"](mcts_sims),
     }
@@ -160,7 +166,7 @@ def main() -> int:
     args = parser.parse_args()
 
     models = [m.strip() for m in args.models.split(",") if m.strip()]
-    slugs = ["random", "graph_bfs", "mcts"]
+    slugs = ["random", "euclidean", "chebyshev", "graph_bfs", "mcts"]
     total = defaultdict(
         lambda: {"games": 0, "actions": 0, "steps": 0, "path": 0.0, "straight": 0.0}
     )
