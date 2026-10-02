@@ -92,7 +92,9 @@ From the project root, using the project virtual environment:
 .poly_jump\Scripts\python.exe -m ai_research.runner --games 10 --radius 6
 ```
 
-By default this evaluates 5 agents: `random` / `manhattan` / `euclidean` / `chebyshev` / `graph_bfs`. Results are written to `ai_research/runs/<timestamp>/`.
+By default this evaluates 5 agents: `random` / `manhattan` / `euclidean` / `chebyshev` / `graph_bfs` (add `mcts` via `--agents`). Results are written to `ai_research/runs/<timestamp>/`.
+
+**Local AI PK result** (A 9³ / B R=8, 80 games per config): `euclidean` is strongest, followed by `graph_bfs`, then `chebyshev` / `manhattan` / `random`. Full data in [docs/14-local-ai-pk.md](./docs/14-local-ai-pk.md).
 
 ## AI / Research Interface
 
@@ -139,9 +141,11 @@ ai_research/             # AI benchmark
   agents/                # Baseline agents
   runner.py              # Batch benchmark entry
   metrics.py             # Metric aggregation
+  pk_analyze.py          # Offline PK tie-break / ranking
 configs/                 # Example configs
 docs/                    # Design documentation
 tests/                   # pytest tests
+tools/                   # Development probe scripts
 ```
 
 ## Documentation
@@ -159,12 +163,16 @@ tests/                   # pytest tests
 | [Path Metrics](docs/09-path-metrics.md) | Action / Step data model |
 | [Semantics](docs/10-semantics.md) | Rules / scoring / replay semantics |
 | [Cross-Geometry Finding](docs/11-cross-geometry-discovery.md) | Preliminary cross-geometry path finding |
+| [Supplementary Experiments](docs/12-supplementary-experiments.md) | Supplementary experiments (optional) |
+| [LLM Agent Benchmark Design](docs/13-llm-agent-benchmark.md) | LLM match test design (draft, not implemented) |
+| [Local AI PK](docs/14-local-ai-pk.md) | Local AI PK design and results |
 
 ## Current Status
 
 - Game frontend, backend API, and 7 geometry models are implemented
-- AI benchmark currently includes random and 4 distance baselines
-- Possible extensions: MCTS / UCT, RL / self-play, LLM agent integration
+- AI benchmark includes random / 4 distance baselines / MCTS search
+- Local AI PK completed: `euclidean` > `graph_bfs` > `chebyshev` > `manhattan` > `random` (MCTS not tested)
+- Possible extensions: RL / self-play, LLM agent integration (design in [docs/13](docs/13-llm-agent-benchmark.md))
 
 ## License
 

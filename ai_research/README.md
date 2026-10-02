@@ -28,6 +28,7 @@ ai_research/
 ├── cross_model_finding.py       # 跨几何初步发现实验
 ├── metrics.py                   # 指标计算与汇总
 ├── runner.py                    # 批量评测入口
+├── pk_analyze.py                # 本地 AI PK 离线判优 / 排名
 └── runs/                        # 实验结果（按时间戳归档，已 gitignore）
 ```
 
@@ -121,9 +122,22 @@ runs/20260708_153000/
 - **平均离开目标区次数**：越小越好，对应“AI 进了目标区又出来”的问题。
 - **平均穿过目标区次数**：经过了目标区但没停下来的次数。
 
+## 本地 AI PK
+
+用现有 6 个 agent 在目标场地（A 9³、B R=8）做循环赛，筛选"本地最强"，作为 LLM 对局的对手。
+
+- 赛制、判优规则、复现命令：[docs/14-local-ai-pk.md](../docs/14-local-ai-pk.md)
+- 离线分析（判优 + 排名 + Wilson 区间）：
+
+```powershell
+.poly_jump\Scripts\python.exe -m ai_research.pk_analyze ai_research/runs/pk_a_fast ai_research/runs/pk_b_fast
+```
+
+**第 1 轮结论**（每配置 80 局）：`euclidean` 最强（合并 72.7%），`graph_bfs` 第二（58.0%），其后是 `chebyshev`（58.3%，仅 24 局）、`manhattan`、`random`。`mcts` 因单步 7~17 s 未纳入本轮。
+
 ## 后续
 
 - 当前距离 AI 已加入**随机 tie-break**：同分路径会随机选择，多次对局不再完全重复；通过 `--seed` 仍可复现。
-- 第二阶段：加 Minimax / MCTS / UCT，输出“搜索预算 vs 胜率”的性能曲线。
-- 第三阶段：接 RL / AlphaZero，输出真正的训练曲线。
+- MCTS baseline 已提供（`--agents mcts`），但单步 7~17 s，只适合小规模实验，不适合大批量对局。
+- 下一阶段：接 RL / 自博弈，输出真正的训练曲线。
 - 所有结果都按 `runs/<时间戳>/` 归档，可随时回溯和对比。

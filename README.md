@@ -92,7 +92,9 @@ python -m backend.game.headless --config configs/a_2p_6dir.json --actions 10
 .poly_jump\Scripts\python.exe -m ai_research.runner --games 10 --radius 6
 ```
 
-默认评测 5 个 AI：`random` / `manhattan` / `euclidean` / `chebyshev` / `graph_bfs`，结果生成到 `ai_research/runs/<时间戳>/`。
+默认评测 5 个 AI：`random` / `manhattan` / `euclidean` / `chebyshev` / `graph_bfs`（`--agents` 可加入 `mcts`），结果生成到 `ai_research/runs/<时间戳>/`。
+
+**本地 AI PK 结论**（A 9³ / B R=8，每配置 80 局）：`euclidean` 最强，`graph_bfs` 第二，`chebyshev` / `manhattan` / `random` 依次更弱。完整数据见 [docs/14-local-ai-pk.md](./docs/14-local-ai-pk.md)。
 
 ## AI / 研究接口
 
@@ -139,9 +141,11 @@ ai_research/             # AI 基准评测
   agents/                # 基准 AI
   runner.py              # 批量评测入口
   metrics.py             # 指标统计
+  pk_analyze.py          # PK 离线判优 / 排名
 configs/                 # 配置示例
 docs/                    # 设计文档
 tests/                   # pytest 测试
+tools/                   # 开发探针脚本
 ```
 
 ## 文档
@@ -159,12 +163,16 @@ tests/                   # pytest 测试
 | [路径度量](docs/09-path-metrics.md) | Action / Step 数据模型 |
 | [语义说明](docs/10-semantics.md) | 规则/计分/回放等语义 |
 | [跨几何发现](docs/11-cross-geometry-discovery.md) | 跨几何路径策略初步发现 |
+| [补充实验](docs/12-supplementary-experiments.md) | 补充实验（可选阅读） |
+| [LLM Agent 测试设计](docs/13-llm-agent-benchmark.md) | LLM 对局测试设计（草案，未实现） |
+| [本地 AI PK](docs/14-local-ai-pk.md) | 本地 AI PK 设计与结果 |
 
 ## 当前状态
 
 - 游戏前端、后端接口和 7 种几何模型已实现
-- AI 基准评测当前包含随机和 4 种距离基线
-- 后续可扩展：MCTS / UCT、强化学习 / 自博弈、LLM Agent 接入
+- AI 基准评测包含随机 / 4 种距离基线 / MCTS 搜索
+- 本地 AI PK 已完成：`euclidean` > `graph_bfs` > `chebyshev` > `manhattan` > `random`（MCTS 未测）
+- 后续可扩展：强化学习 / 自博弈、LLM Agent 接入（设计见 [docs/13](docs/13-llm-agent-benchmark.md)）
 
 ## License
 

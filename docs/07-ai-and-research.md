@@ -91,11 +91,21 @@ gymnasium
 pettingzoo
 ```
 
+## 本地 AI 基准与 PK
+
+`ai_research/` 提供不依赖前端的批量评测：
+
+- 6 个内置 agent：`random` / `manhattan` / `euclidean` / `chebyshev` / `graph_bfs` / `mcts`
+- `runner.py` 批量对局 + 时间戳归档，`metrics.py` 指标汇总
+- `pk_analyze.py` 对 PK 结果做离线判优与排名（规则见 [14-local-ai-pk.md](./14-local-ai-pk.md)）
+
+本地 AI PK 结论：`euclidean` 最强，`graph_bfs` 第二（[完整数据](./14-local-ai-pk.md)）。
+
 ## 后续可扩展（不内置）
 
-- MCTS / UCT（已提供 MCTSAgent baseline）
 - 小神经网络
 - RL / 自博弈
+- LLM Agent 接入（设计见 [13-llm-agent-benchmark.md](./13-llm-agent-benchmark.md)）
 
 如果外部程序需要：
 
