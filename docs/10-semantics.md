@@ -111,6 +111,8 @@ on_finish(ctx: FinishContext) -> dict[int, int]  # 对局结束时的最终正�
 - `chain_max_scoring` 只限制计分的连跳次数，不限制连跳本身的 step 数。
 - `scoring.enabled = False` 时 action 计分恒为 0，但**对局结束的结算不受 `enabled` 影响**
   （胜者仍会拿到 `first_finish_reward` / 存活棋子分）。
+  这个语义从第一版起就如此：`enabled` 是**过程计分开关**，不是积分系统总开关。
+  需要**完全不计分**时注入 `NullScoring`，而不是依赖 `enabled`。
 
 ## 6. round 定义
 
