@@ -223,6 +223,9 @@ progress.md
 task_plan.md
 findings.md
 
+# Local personal tools (not part of repository)
+tools/export_llm_transcript.py
+
 # AI research local data artifacts (code can be committed later)
 ai_research/runs/
 ai_research/logs/
