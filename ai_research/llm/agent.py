@@ -33,54 +33,40 @@ from ..agents.base import Agent, BudgetExceeded
 from .client import Budget, DeepSeekClient
 from .tools import TOOL_SCHEMAS, execute_tool, parse_arguments
 
-PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "v2.md"
+PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "v3.md"
 
 
-def render_state(env: GameEnv, player: int, opponents: Optional[Dict[int, str]] = None) -> str:
-    """紧凑状态块（支持任意人数）。
-
-    四块内容：
-
-    1. 自己的棋子与目标区
-    2. **每个对手**的棋子与各自进度（多人局里"谁快赢了"是决策信息）
-    3. 各方进度汇总
-    4. **自你上次行动以来其他玩家的操作** —— 只看棋盘快照无法判断谁做了什么
-
-    第 4 块的窗口按「玩家身份」切（`history[自己上次行动之后:]`），
-    不按回合数算 —— 有玩家无棋可走被跳过时，按数字算会错位。
-
-    `opponents` 可选：`{玩家号: 描述}`，传入时在每个对手后面标注它是谁
-    （例：`P2 [Euclidean-distance greedy]`）。**不含本 agent 自己的身份** ——
-    渲染时本来就会跳过自己。
-    """
+def _board_facts(env: GameEnv, player: int):
+    """把 state_dict 解析成渲染需要的结构。"""
     state = env.state_dict()
     players = int(state["config"]["players"])
-
     pieces: Dict[int, List[tuple]] = {}
     for pos_key, owner in state["pieces"].items():
         pieces.setdefault(int(owner), []).append(tuple(int(v) for v in pos_key.split(",")))
+    targets = {
+        p: {tuple(int(v) for v in c) for c in state["targets"][str(p)]}
+        for p in range(1, players + 1)
+    }
+    return state, players, pieces, targets
 
-    def target_cells(owner: int) -> set:
-        return {tuple(int(v) for v in p) for p in state["targets"][str(owner)]}
 
-    targets = {p: target_cells(p) for p in range(1, players + 1)}
+def _fmt(points) -> str:
+    return " ".join(f"({x},{y},{z})" for x, y, z in points)
+
+
+def render_board(env: GameEnv, player: int, opponents: Optional[Dict[int, str]] = None) -> str:
+    """完整棋盘：自己的棋子与目标区 + 每个对手的棋子与进度。
+
+    也作为 `get_board` 工具的返回内容（增量模式下模型主动查询时用）。
+    """
+    _, players, pieces, targets = _board_facts(env, player)
     mine = sorted(pieces.get(player, []))
     my_target = targets[player]
     my_inside = sum(1 for p in mine if p in my_target)
 
-    def fmt(points) -> str:
-        return " ".join(f"({x},{y},{z})" for x, y, z in points)
-
-    def fmt_point(point) -> str:
-        return f"({point[0]},{point[1]},{point[2]})"
-
     lines = [
-        f"You are P{player} of {players} players. "
-        # state["round"] 是「上一个动作」所在轮次；这里要显示「即将进行的」轮次
-        f"Round {int(state['action_count']) // players + 1}.",
-        f"Goal: fill ALL {len(my_target)} cells of your target region with your pieces.",
-        f"Your pieces ({len(mine)}): {fmt(mine)}",
-        f"Your target region ({len(my_target)} cells): {fmt(sorted(my_target))}",
+        f"Your pieces ({len(mine)}): {_fmt(mine)}",
+        f"Your target region ({len(my_target)} cells): {_fmt(sorted(my_target))}",
         f"Your progress: {my_inside}/{len(my_target)} pieces in target.",
         "",
         "Other players:",
@@ -93,38 +79,102 @@ def render_state(env: GameEnv, player: int, opponents: Optional[Dict[int, str]] 
         label = f" [{opponents[other]}]" if opponents and other in opponents else ""
         lines.append(
             f"  P{other}{label}: {inside}/{len(targets[other])} in target | "
-            f"pieces ({len(theirs)}): {fmt(theirs)}"
+            f"pieces ({len(theirs)}): {_fmt(theirs)}"
         )
+    return "\n".join(lines)
 
+
+def render_progress(env: GameEnv, player: int) -> str:
+    """只给各方进度（增量模式）—— 谁快赢了是每回合都必须知道的信息。"""
+    _, players, pieces, targets = _board_facts(env, player)
+
+    def inside(owner: int) -> int:
+        return sum(1 for p in pieces.get(owner, []) if p in targets[owner])
+
+    parts = [f"you {inside(player)}/{len(targets[player])}"]
+    for other in range(1, players + 1):
+        if other != player:
+            parts.append(f"P{other} {inside(other)}/{len(targets[other])}")
+    return "Progress: " + " | ".join(parts) + " pieces in target."
+
+
+def render_window(env: GameEnv, player: int) -> str:
+    """自你上次行动以来，其他玩家做了什么。
+
+    按**玩家身份**切（`history[自己上次行动之后:]`），不按回合数算 ——
+    有玩家无棋可走被跳过时，按数字算会错位。
+    """
+    state, _, _, targets = _board_facts(env, player)
     history = state.get("actions", [])
     last_own = max((i for i, a in enumerate(history) if a.get("player") == player), default=-1)
     recent = history[last_own + 1:]
 
-    lines.append("")
     if not recent:
-        lines.append("Moves since your last turn: none — you are first to act this game.")
-    else:
-        lines.append(f"Moves since your last turn ({len(recent)}):")
-        for action in recent:
-            path = action.get("path") or []
-            if len(path) < 2:
-                continue
-            mover = int(action["player"])
-            start = tuple(int(v) for v in path[0])
-            end = tuple(int(v) for v in path[-1])
-            steps = len(path) - 1
-            tags = []
-            if start not in targets.get(mover, set()) and end in targets.get(mover, set()):
-                tags.append("entered target")
-            if steps > 1:
-                tags.append("chain")
-            suffix = f"  [{', '.join(tags)}]" if tags else ""
-            lines.append(
-                f"  P{mover}: {fmt_point(start)} -> {fmt_point(end)}  "
-                f"{steps} step{'s' if steps != 1 else ''}{suffix}"
-            )
+        return "Moves since your last turn: none — you are first to act this game."
 
+    lines = [f"Moves since your last turn ({len(recent)}):"]
+    for action in recent:
+        path = action.get("path") or []
+        if len(path) < 2:
+            continue
+        mover = int(action["player"])
+        start = tuple(int(v) for v in path[0])
+        end = tuple(int(v) for v in path[-1])
+        steps = len(path) - 1
+        tags = []
+        if start not in targets.get(mover, set()) and end in targets.get(mover, set()):
+            tags.append("entered target")
+        if steps > 1:
+            tags.append("chain")
+        suffix = f"  [{', '.join(tags)}]" if tags else ""
+        lines.append(
+            f"  P{mover}: ({start[0]},{start[1]},{start[2]}) -> ({end[0]},{end[1]},{end[2]})  "
+            f"{steps} step{'s' if steps != 1 else ''}{suffix}"
+        )
     return "\n".join(lines)
+
+
+def render_state(
+    env: GameEnv,
+    player: int,
+    opponents: Optional[Dict[int, str]] = None,
+    include_board: bool = True,
+) -> str:
+    """组装状态块。
+
+    `include_board=False` 走**增量模式**：只给各方进度与变动窗口，
+    完整棋盘要靠模型主动调用 `get_board` 工具获取。
+
+    `opponents` 可选：`{玩家号: 描述}`，传入时在每个对手后面标注它是谁。
+    **不含本 agent 自己的身份** —— 渲染时本来就会跳过自己。
+    """
+    state, players, _, targets = _board_facts(env, player)
+    round_no = int(state["action_count"]) // players + 1
+
+    lines = [
+        f"You are P{player} of {players} players. Round {round_no}.",
+        f"Goal: fill ALL {len(targets[player])} cells of your target region with your pieces.",
+    ]
+    if include_board:
+        lines.append(render_board(env, player, opponents))
+    else:
+        lines.append(render_progress(env, player))
+        lines.append("")
+        lines.append("(Full board not shown. Call get_board if you need the current position.)")
+    lines.append("")
+    lines.append(render_window(env, player))
+    return "\n".join(lines)
+
+
+def should_include_board(board_mode: str, messages: List[dict]) -> bool:
+    """本回合是否给完整棋盘。
+
+    `full` 模式永远给；`delta` 模式只在**对话还没有任何回合**时给 ——
+    无记忆（每回合清空）时因此自然退化为每回合都给。
+    """
+    if board_mode == "full":
+        return True
+    return not any(m.get("role") == "user" for m in messages)
 
 
 def trim_conversation(messages: List[dict], keep_turns: int) -> List[dict]:
@@ -159,6 +209,16 @@ class LLMAgent(Agent):
     | `N > 0` | 保留最近 N 个回合 |
 
     裁剪发生在**回合开始时**，且在 user 消息边界整段截断。
+
+    `board_mode` 控制棋盘信息的供给方式：
+
+    | 值 | 含义 |
+    |---|---|
+    | `"delta"`（默认） | 只在**本对话的第一次**给完整棋盘，之后只给进度与变动窗口；模型需要时自己调 `get_board` |
+    | `"full"` | 每回合都给完整棋盘 |
+
+    两个开关互相独立，可自由组合；注意 `delta + context_turns=0` 会退化为每回合都给完整棋盘
+    （因为每回合都没有历史可依据）。
     """
 
     def __init__(
@@ -168,6 +228,7 @@ class LLMAgent(Agent):
         effort: str = "max",
         max_rounds: int = 3,
         context_turns: int = -1,
+        board_mode: str = "delta",
         opponents: Optional[Dict[int, str]] = None,
         budget: Optional[Budget] = None,
         log_dir: Optional[Path] = None,
@@ -176,6 +237,9 @@ class LLMAgent(Agent):
         self.effort = effort
         self.max_rounds = max_rounds
         self.context_turns = context_turns
+        if board_mode not in ("full", "delta"):
+            raise ValueError("board_mode 只支持 full / delta")
+        self.board_mode = board_mode
         self.opponents = dict(opponents) if opponents else None
         self.budget = budget or Budget()
         self.log_dir = Path(log_dir) if log_dir else None
@@ -220,11 +284,15 @@ class LLMAgent(Agent):
         obs = env.observe()
         player = obs.current_player
         legal = obs.legal_actions
-        state_block = render_state(env, player, self.opponents)
         log_path = self._log_path(env, player)
 
         self._ensure_conversation(env.state_dict().get("game_id"))
         self._trim_context()
+        # 增量模式：只在「本对话还没有任何回合」时给完整棋盘；
+        # 无记忆时每回合都算第一次，自然退化为每回合都给。
+        include_board = should_include_board(self.board_mode, self._messages)
+        state_block = render_state(env, player, self.opponents, include_board)
+
         self._turn += 1
         turn = self._turn
         self._messages.append(
@@ -257,6 +325,7 @@ class LLMAgent(Agent):
                 "model": self.model,
                 "effort": self.effort,
                 "state_block": state_block,
+                "board_included": include_board,
                 "reasoning": resp.reasoning,
                 "content": resp.content,
                 "finish_reason": resp.finish_reason,
@@ -298,7 +367,10 @@ class LLMAgent(Agent):
 
             for tc in resp.tool_calls:
                 args = parse_arguments(tc["arguments"])
-                text, action = execute_tool(tc["name"], args, legal)
+                text, action = execute_tool(
+                    tc["name"], args, legal,
+                    board_provider=lambda: render_board(env, player, self.opponents),
+                )
                 call_record["tool_calls"].append({
                     "name": tc["name"], "arguments": args, "result": text,
                 })

@@ -303,6 +303,9 @@ def main() -> int:
                              "便于做「有记忆 / 无记忆」对照")
     parser.add_argument("--llm-show-opponents", action="store_true",
                         help="在状态块里标注每个对手是什么（模型/算法）；不含本 agent 自己")
+    parser.add_argument("--llm-board", choices=["delta", "full"], default="delta",
+                        help="棋盘信息供给：delta = 只在对话首次给完整棋盘，之后只给进度与变动，"
+                             "需要时由模型自己调 get_board（默认）；full = 每回合都给完整棋盘")
     args = parser.parse_args()
 
     agent_slugs = [s.strip() for s in args.agents.split(",") if s.strip()]
@@ -331,6 +334,7 @@ def main() -> int:
         "max_rounds": args.llm_max_rounds,
         # -1 = 完整对话；0 = 每回合独立（只带 system 提示词）
         "context_turns": -1 if args.llm_full_context else 0,
+        "board_mode": args.llm_board,
         "budget": llm_budget,
         "log_dir": run_dir / "llm",
     }
@@ -349,11 +353,12 @@ def main() -> int:
         experiment["llm"] = {
             "interface": "tool_query",
             "conversation": "persistent" if args.llm_full_context else "per_turn",
+            "board": args.llm_board,
             "effort": args.llm_effort,
             "max_rounds": args.llm_max_rounds,
             "budget_cny": args.llm_budget,
             "show_opponents": args.llm_show_opponents,
-            "prompt_file": "ai_research/llm/prompts/v2.md",
+            "prompt_file": "ai_research/llm/prompts/v3.md",
         }
     with (run_dir / "experiment.json").open("w", encoding="utf-8") as f:
         json.dump(experiment, f, ensure_ascii=False, indent=2)

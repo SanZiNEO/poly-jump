@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 Point = Tuple[int, int, int]
 
@@ -34,6 +34,17 @@ def _fmt_single(point: Point) -> str:
 
 
 TOOL_SCHEMAS: List[dict] = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_board",
+            "description": (
+                "返回完整棋盘：你的全部棋子、你的目标区、每个对手的棋子与各自进度。"
+                "增量模式下不会每回合提供棋盘，需要确认局面时调用它。"
+            ),
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
     {
         "type": "function",
         "function": {
@@ -113,12 +124,20 @@ def execute_tool(
     name: str,
     args: Dict[str, Any],
     legal_actions: List[dict],
+    board_provider: Optional[Callable[[], str]] = None,
 ) -> Tuple[str, Optional[dict]]:
     """执行一次工具调用。
 
     返回 (回给模型的文本, 选中的 action 或 None)。
     选中的 action 是 runner 的 action dict（含 id / path / step_count）。
+
+    `board_provider` 供 `get_board` 使用：返回完整棋盘的文本。
     """
+    if name == "get_board":
+        if board_provider is None:
+            return "完整棋盘不可用", None
+        return board_provider(), None
+
     if name == "get_moves":
         raw_pieces = args.get("pieces")
         if isinstance(raw_pieces, (list, tuple)) and len(raw_pieces) == 3 and all(

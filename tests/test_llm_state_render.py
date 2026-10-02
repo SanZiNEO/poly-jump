@@ -15,7 +15,13 @@ import re
 
 import pytest
 
-from ai_research.llm.agent import render_state, trim_conversation
+from ai_research.llm.agent import (
+    render_board,
+    render_state,
+    should_include_board,
+    trim_conversation,
+)
+from ai_research.llm.tools import execute_tool
 from ai_research.runner import make_a_config
 from backend.game.env import GameEnv
 
@@ -99,6 +105,49 @@ def test_window_lists_other_players_only():
     window = render_state(env, actor).split("Moves since your last turn")[1]
     assert "P1:" in window and "P2:" in window
     assert "P3:" not in window
+
+
+def test_delta_render_omits_board_but_keeps_progress_and_window():
+    """增量模式：不给棋子坐标，但进度、变动窗口和 get_board 提示都要有。"""
+    env = make_env(players=3)
+    step(env, 3)
+    text = render_state(env, env.observe().current_player, include_board=False)
+    assert "Your pieces (" not in text
+    assert "Progress:" in text
+    assert "get_board" in text
+    assert "Moves since your last turn (2):" in text
+
+
+def test_full_render_includes_board():
+    text = render_state(make_env(players=3), 1)
+    assert "Your pieces (" in text
+    assert "get_board" not in text
+
+
+def test_should_include_board():
+    user_turn = [{"role": "system"}, {"role": "user"}]
+    assert should_include_board("full", user_turn) is True
+    assert should_include_board("full", []) is True
+    assert should_include_board("delta", []) is True          # 本对话第一次
+    assert should_include_board("delta", [{"role": "system"}]) is True
+    assert should_include_board("delta", user_turn) is False  # 已有回合，改给增量
+
+
+def test_get_board_tool_returns_full_board():
+    env = make_env(players=3)
+    text, action = execute_tool(
+        "get_board", {}, env.observe().legal_actions,
+        board_provider=lambda: render_board(env, 1),
+    )
+    assert "Your pieces (" in text
+    assert "Other players:" in text
+    assert action is None, "get_board 不产生动作"
+
+
+def test_get_board_without_provider_is_reported():
+    text, action = execute_tool("get_board", {}, [])
+    assert "不可用" in text
+    assert action is None
 
 
 def conversation() -> list:
