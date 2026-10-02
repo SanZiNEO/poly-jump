@@ -358,7 +358,7 @@ def main() -> int:
             "max_rounds": args.llm_max_rounds,
             "budget_cny": args.llm_budget,
             "show_opponents": args.llm_show_opponents,
-            "prompt_file": "ai_research/llm/prompts/v3.md",
+            "prompt_file": "ai_research/llm/prompts/v4.md",
         }
     with (run_dir / "experiment.json").open("w", encoding="utf-8") as f:
         json.dump(experiment, f, ensure_ascii=False, indent=2)

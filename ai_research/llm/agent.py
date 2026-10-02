@@ -33,7 +33,7 @@ from ..agents.base import Agent, BudgetExceeded
 from .client import Budget, DeepSeekClient
 from .tools import TOOL_SCHEMAS, execute_tool, parse_arguments
 
-PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "v3.md"
+PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "v4.md"
 
 
 def _board_facts(env: GameEnv, player: int):
