@@ -1,6 +1,6 @@
 """LLM 状态渲染测试：多人局 + 「自上次自己行动以来的变动」窗口。
 
-对应设计见 `ai_research/llm/agent.py::render_state` 与 `prompts/v2.md`。
+对应设计见 `ai_research/llm/agent.py::render_state` 与 `prompts/system.md`。
 
 两条核心约束：
 

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import random
 import sys
@@ -358,7 +359,10 @@ def main() -> int:
             "max_rounds": args.llm_max_rounds,
             "budget_cny": args.llm_budget,
             "show_opponents": args.llm_show_opponents,
-            "prompt_file": "ai_research/llm/prompts/v4.md",
+            "prompt_file": "ai_research/llm/prompts/system.md",
+            "prompt_sha256": hashlib.sha256(
+                (Path(__file__).resolve().parent / "llm" / "prompts" / "system.md").read_bytes()
+            ).hexdigest()[:16],
         }
     with (run_dir / "experiment.json").open("w", encoding="utf-8") as f:
         json.dump(experiment, f, ensure_ascii=False, indent=2)
