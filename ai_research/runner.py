@@ -42,14 +42,30 @@ from backend.game.config import (
 )
 from backend.game.env import GameEnv
 
-from .agents.base import Agent, get_targets
+from .agents.base import Agent, BudgetExceeded, get_targets
 from .agents.random_ai import RandomAgent
 from .agents.manhattan_ai import ManhattanAgent
 from .agents.euclidean_ai import EuclideanAgent
 from .agents.chebyshev_ai import ChebyshevAgent
 from .agents.graph_bfs_ai import GraphBFSAgent
 from .agents.mcts_ai import MCTSAgent
+from .llm.client import Budget
 from .metrics import aggregate_matches, analyze_match
+
+LLM_PREFIX = "llm:"
+
+
+def is_llm_slug(slug: str) -> bool:
+    return slug.startswith(LLM_PREFIX)
+
+
+def make_agent(slug: str, llm_options: Optional[dict] = None) -> Agent:
+    """按 slug 造 agent；`llm:<model>` 走 LLM 工厂，其余查注册表。"""
+    if is_llm_slug(slug):
+        from .llm.agent import LLMAgent
+
+        return LLMAgent(model=slug[len(LLM_PREFIX):], **(llm_options or {}))
+    return AGENT_REGISTRY[slug]()
 
 AGENT_REGISTRY: Dict[str, Type[Agent]] = {
     "random": RandomAgent,
@@ -167,19 +183,27 @@ def play_one_game(
     max_actions: int,
 ) -> dict:
     """用 GameEnv 跑一局，返回本局 analyze_match 结果 + player_agent。"""
+    terminated_reason: Optional[str] = None
     while True:
         obs = env.observe()
         if obs.done:
             break
         if obs.action_count >= max_actions:
+            terminated_reason = "max_actions"
             break
 
         player = obs.current_player
         agent = agents[player]
-        action = agent.choose(env)
+        try:
+            action = agent.choose(env)
+        except BudgetExceeded as exc:
+            terminated_reason = "llm_budget_exceeded"
+            print(f"    ! {exc}")
+            break
         if action is None:
             legal = env.legal_actions()
             if not legal:
+                terminated_reason = "no_legal_actions"
                 break
             action = legal[0]
         env.execute_action(action)
@@ -188,6 +212,8 @@ def play_one_game(
     targets = get_targets(state)
     match = analyze_match(env, targets)
     match["player_agent"] = {p: a.slug for p, a in agents.items()}
+    if terminated_reason:
+        match["terminated_reason"] = terminated_reason
     return match
 
 
@@ -238,15 +264,22 @@ def main() -> int:
     parser.add_argument("--max-actions", type=int, default=2000, help="单局最大 action 数")
     parser.add_argument("--seed", type=int, default=42, help="随机种子")
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT, help="输出根目录")
+    parser.add_argument("--llm-effort", default="max", choices=["none", "low", "high", "max"],
+                        help="LLM 思考强度")
+    parser.add_argument("--llm-budget", type=float, default=9.0, help="LLM 费用上限（元）")
+    parser.add_argument("--llm-max-rounds", type=int, default=3, help="LLM 每回合最多工具调用轮数")
     args = parser.parse_args()
 
     agent_slugs = [s.strip() for s in args.agents.split(",") if s.strip()]
-    unknown = [s for s in agent_slugs if s not in AGENT_REGISTRY]
+    unknown = [s for s in agent_slugs if s not in AGENT_REGISTRY and not is_llm_slug(s)]
     if unknown:
-        print(f"未知 agent: {unknown}，可选: {list(AGENT_REGISTRY)}")
+        print(f"未知 agent: {unknown}，可选: {list(AGENT_REGISTRY)} 或 llm:<model>")
         return 1
     if len(agent_slugs) < args.players:
         print(f"玩家人数 {args.players}，但只提供了 {len(agent_slugs)} 个 AI，需要至少 {args.players} 个")
+        return 1
+    if any(is_llm_slug(s) for s in agent_slugs) and args.players != 2:
+        print("LLM agent 目前只支持 2 人局（状态渲染按双方设计）")
         return 1
 
     random.seed(args.seed)
@@ -259,6 +292,16 @@ def main() -> int:
     matches_dir.mkdir(parents=True, exist_ok=True)
     curves_dir.mkdir(parents=True, exist_ok=True)
 
+    matches: List[dict] = []
+    llm_budget = Budget(limit_cny=args.llm_budget)
+    llm_options = {
+        "effort": args.llm_effort,
+        "max_rounds": args.llm_max_rounds,
+        "budget": llm_budget,
+        "log_dir": run_dir / "llm",
+    }
+    uses_llm = any(is_llm_slug(s) for s in agent_slugs)
+
     # 实验配置快照
     experiment = {
         "timestamp": timestamp,
@@ -268,11 +311,22 @@ def main() -> int:
         "games_per_pair": args.games,
         "max_actions": args.max_actions,
     }
+    if uses_llm:
+        experiment["llm"] = {
+            "interface": "tool_query",
+            "effort": args.llm_effort,
+            "max_rounds": args.llm_max_rounds,
+            "budget_cny": args.llm_budget,
+            "prompt_file": "ai_research/llm/prompts/v1.md",
+        }
     with (run_dir / "experiment.json").open("w", encoding="utf-8") as f:
         json.dump(experiment, f, ensure_ascii=False, indent=2)
 
-    matches: List[dict] = []
-    agents_info = {slug: AGENT_REGISTRY[slug]().display_name for slug in agent_slugs}
+    agents_info = {
+        slug: (f"LLM·{slug[len(LLM_PREFIX):]}" if is_llm_slug(slug)
+               else AGENT_REGISTRY[slug]().display_name)
+        for slug in agent_slugs
+    }
 
     game_index = 0
     if args.geometry == "A":
@@ -295,7 +349,7 @@ def main() -> int:
 
                     env = GameEnv(config)
                     agents = {
-                        p: AGENT_REGISTRY[slug]()
+                        p: make_agent(slug, llm_options)
                         for p, slug in player_agent_slugs.items()
                     }
                     match = play_one_game(env, agents, args.max_actions)
@@ -328,7 +382,7 @@ def main() -> int:
 
                 env = GameEnv(config)
                 agents = {
-                    p: AGENT_REGISTRY[slug]()
+                    p: make_agent(slug, llm_options)
                     for p, slug in player_agent_slugs.items()
                 }
                 match = play_one_game(env, agents, args.max_actions)
@@ -369,6 +423,14 @@ def main() -> int:
         f.write(summary_text)
 
     print(f"\n完成！输出目录：{run_dir}")
+    if uses_llm:
+        budget_path = run_dir / "llm_budget.json"
+        with budget_path.open("w", encoding="utf-8") as f:
+            json.dump(llm_budget.summary(), f, ensure_ascii=False, indent=2)
+        print(f"LLM 费用：¥{llm_budget.spent_cny:.4f} / 上限 ¥{llm_budget.limit_cny:.2f}"
+              f"（调用 {llm_budget.calls} 次，输出 {llm_budget.completion_tokens} token，"
+              f"其中思考 {llm_budget.reasoning_tokens}）")
+        print(f"LLM 明细：{budget_path}")
     print(f"汇总写入：{run_dir / 'metrics.json'}")
     print(f"人类可读：{run_dir / 'summary.md'}")
     print("\n你可以打开 summary.md 查看对比结果。")

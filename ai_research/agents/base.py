@@ -74,6 +74,10 @@ def chebyshev(a: Point, b: Point) -> int:
     return max(abs(x - y) for x, y in zip(a, b))
 
 
+class BudgetExceeded(RuntimeError):
+    """LLM 调用费用超出预算（由 runner 捕获并结束本局）。"""
+
+
 class Agent:
     """所有研究用 AI 的接口。
 

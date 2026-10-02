@@ -5,3 +5,5 @@ numpy
 pytest
 gymnasium
 pettingzoo
+openai
+python-dotenv
