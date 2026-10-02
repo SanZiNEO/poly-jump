@@ -15,7 +15,7 @@ import re
 
 import pytest
 
-from ai_research.llm.agent import render_state
+from ai_research.llm.agent import render_state, trim_conversation
 from ai_research.runner import make_a_config
 from backend.game.env import GameEnv
 
@@ -99,6 +99,46 @@ def test_window_lists_other_players_only():
     window = render_state(env, actor).split("Moves since your last turn")[1]
     assert "P1:" in window and "P2:" in window
     assert "P3:" not in window
+
+
+def conversation() -> list:
+    """三个回合的对话。"""
+    msgs = [{"role": "system", "content": "S"}]
+    for i in (1, 2, 3):
+        msgs += [
+            {"role": "user", "content": f"u{i}"},
+            {"role": "assistant", "content": f"a{i}"},
+            {"role": "tool", "content": f"t{i}"},
+        ]
+    return msgs
+
+
+def contents(messages: list) -> list:
+    return [m["content"] for m in messages]
+
+
+def test_trim_conversation_unlimited():
+    msgs = conversation()
+    assert trim_conversation(msgs, -1) is msgs
+
+
+def test_trim_conversation_zero_means_per_turn():
+    """keep_turns=0 = 每回合独立：只剩 system，连自己上一回合都不带。"""
+    assert contents(trim_conversation(conversation(), 0)) == ["S"]
+
+
+def test_trim_conversation_keeps_last_n_turns():
+    assert contents(trim_conversation(conversation(), 1)) == ["S", "u3", "a3", "t3"]
+    assert contents(trim_conversation(conversation(), 2)) == ["S", "u2", "a2", "t2", "u3", "a3", "t3"]
+
+
+def test_trim_conversation_never_splits_a_turn():
+    """截断必须整回合切，否则会出现「有 tool_calls 却没有 tool 结果」的非法对话。"""
+    for keep in (0, 1, 2):
+        trimmed = trim_conversation(conversation(), keep)
+        assert trimmed[0]["role"] == "system"
+        for message in trimmed[1:]:
+            assert message["role"] in ("user", "assistant", "tool")
 
 
 def test_window_matches_action_history():

@@ -298,8 +298,9 @@ def main() -> int:
                         help="LLM 思考强度")
     parser.add_argument("--llm-budget", type=float, default=9.0, help="LLM 费用上限（元）")
     parser.add_argument("--llm-max-rounds", type=int, default=3, help="LLM 每回合最多工具调用轮数")
-    parser.add_argument("--llm-context-turns", type=int, default=0,
-                        help="LLM 对话保留最近多少回合（0 = 完整对话，不截断）")
+    parser.add_argument("--llm-full-context", action=argparse.BooleanOptionalAction, default=True,
+                        help="LLM 携带完整对话历史（默认开）；--no-llm-full-context 则每回合独立，"
+                             "便于做「有记忆 / 无记忆」对照")
     parser.add_argument("--llm-show-opponents", action="store_true",
                         help="在状态块里标注每个对手是什么（模型/算法）；不含本 agent 自己")
     args = parser.parse_args()
@@ -328,7 +329,8 @@ def main() -> int:
     llm_options = {
         "effort": args.llm_effort,
         "max_rounds": args.llm_max_rounds,
-        "context_turns": args.llm_context_turns,
+        # -1 = 完整对话；0 = 每回合独立（只带 system 提示词）
+        "context_turns": -1 if args.llm_full_context else 0,
         "budget": llm_budget,
         "log_dir": run_dir / "llm",
     }
@@ -346,7 +348,7 @@ def main() -> int:
     if uses_llm:
         experiment["llm"] = {
             "interface": "tool_query",
-            "conversation": "persistent" if not args.llm_context_turns else f"last_{args.llm_context_turns}_turns",
+            "conversation": "persistent" if args.llm_full_context else "per_turn",
             "effort": args.llm_effort,
             "max_rounds": args.llm_max_rounds,
             "budget_cny": args.llm_budget,

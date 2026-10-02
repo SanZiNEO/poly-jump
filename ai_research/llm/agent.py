@@ -127,8 +127,39 @@ def render_state(env: GameEnv, player: int, opponents: Optional[Dict[int, str]] 
     return "\n".join(lines)
 
 
+def trim_conversation(messages: List[dict], keep_turns: int) -> List[dict]:
+    """只保留最近 `keep_turns` 个回合的对话。
+
+    - `keep_turns < 0`：不限，原样返回（完整对话）
+    - `keep_turns = 0`：只留 system 消息（每回合独立）
+    - `keep_turns > 0`：system + 最近 N 个回合
+
+    必须在 **user 消息边界**整段截断 —— 在回合中间切会出现
+    「有 tool_calls 却没有对应 tool 结果」的非法对话，API 会直接报错。
+    """
+    if keep_turns < 0:
+        return messages
+    starts = [i for i, m in enumerate(messages) if m.get("role") == "user"]
+    if len(starts) <= keep_turns:
+        return messages
+    if keep_turns == 0:
+        return messages[:1]
+    return messages[:1] + messages[starts[-keep_turns]:]
+
+
 class LLMAgent(Agent):
-    """把 LLM 当成一个 PolyJump 玩家（完整对话 + 多人局）。"""
+    """把 LLM 当成一个 PolyJump 玩家（完整对话 + 多人局）。
+
+    `context_turns` 控制对话记忆：
+
+    | 值 | 含义 |
+    |---|---|
+    | `-1`（默认） | 完整对话，不截断 |
+    | `0` | 每回合独立（只带 system 提示词） |
+    | `N > 0` | 保留最近 N 个回合 |
+
+    裁剪发生在**回合开始时**，且在 user 消息边界整段截断。
+    """
 
     def __init__(
         self,
@@ -136,7 +167,7 @@ class LLMAgent(Agent):
         *,
         effort: str = "max",
         max_rounds: int = 3,
-        context_turns: int = 0,
+        context_turns: int = -1,
         opponents: Optional[Dict[int, str]] = None,
         budget: Optional[Budget] = None,
         log_dir: Optional[Path] = None,
@@ -181,17 +212,8 @@ class LLMAgent(Agent):
             self._messages.append({"role": "system", "content": self._prompt})
 
     def _trim_context(self) -> None:
-        """只保留最近 `context_turns` 个回合（0 = 不限）。
-
-        在 user 消息边界处整段截断 —— 不能在回合中间切，
-        否则会出现「有 tool_calls 却没有对应 tool 结果」的非法对话。
-        """
-        if self.context_turns <= 0:
-            return
-        starts = [i for i, m in enumerate(self._messages) if m.get("role") == "user"]
-        if len(starts) <= self.context_turns:
-            return
-        self._messages = self._messages[:1] + self._messages[starts[-self.context_turns]:]
+        """按 `context_turns` 裁剪对话（在回合开始时调用）。"""
+        self._messages = trim_conversation(self._messages, self.context_turns)
 
     # ------------------------------------------------------------------ 主流程
     def choose(self, env: GameEnv) -> Optional[list]:
@@ -202,6 +224,7 @@ class LLMAgent(Agent):
         log_path = self._log_path(env, player)
 
         self._ensure_conversation(env.state_dict().get("game_id"))
+        self._trim_context()
         self._turn += 1
         turn = self._turn
         self._messages.append(
@@ -295,8 +318,6 @@ class LLMAgent(Agent):
                 "role": "user",
                 "content": "还没看到你的 move。请在下一步用 move 执行一个合法走法。",
             })
-
-        self._trim_context()
 
         self._append(log_path, {
             "kind": "turn_summary",
