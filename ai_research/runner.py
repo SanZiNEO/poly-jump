@@ -67,6 +67,36 @@ def make_agent(slug: str, llm_options: Optional[dict] = None) -> Agent:
         return LLMAgent(model=slug[len(LLM_PREFIX):], **(llm_options or {}))
     return AGENT_REGISTRY[slug]()
 
+
+# 给 LLM 看的对手描述（英文，与提示词语言一致）
+AGENT_DESCRIPTIONS: Dict[str, str] = {
+    "random": "random mover",
+    "manhattan": "Manhattan-distance greedy",
+    "euclidean": "Euclidean-distance greedy",
+    "chebyshev": "Chebyshev-distance greedy",
+    "graph_bfs": "graph-distance greedy",
+    "mcts": "MCTS search",
+}
+
+
+def describe_agent(slug: str) -> str:
+    """把一个 agent slug 变成人类可读的身份描述。"""
+    if is_llm_slug(slug):
+        return f"LLM ({slug[len(LLM_PREFIX):]})"
+    return AGENT_DESCRIPTIONS.get(slug, slug)
+
+
+def agent_options_for(
+    player_agent_slugs: Dict[int, str], llm_options: dict, show_opponents: bool
+) -> dict:
+    """构造 agent 构造参数；开启时附上完整名册（渲染时会自动跳过自己）。"""
+    options = dict(llm_options)
+    if show_opponents:
+        options["opponents"] = {
+            player: describe_agent(slug) for player, slug in player_agent_slugs.items()
+        }
+    return options
+
 AGENT_REGISTRY: Dict[str, Type[Agent]] = {
     "random": RandomAgent,
     "manhattan": ManhattanAgent,
@@ -270,6 +300,8 @@ def main() -> int:
     parser.add_argument("--llm-max-rounds", type=int, default=3, help="LLM 每回合最多工具调用轮数")
     parser.add_argument("--llm-context-turns", type=int, default=0,
                         help="LLM 对话保留最近多少回合（0 = 完整对话，不截断）")
+    parser.add_argument("--llm-show-opponents", action="store_true",
+                        help="在状态块里标注每个对手是什么（模型/算法）；不含本 agent 自己")
     args = parser.parse_args()
 
     agent_slugs = [s.strip() for s in args.agents.split(",") if s.strip()]
@@ -318,6 +350,7 @@ def main() -> int:
             "effort": args.llm_effort,
             "max_rounds": args.llm_max_rounds,
             "budget_cny": args.llm_budget,
+            "show_opponents": args.llm_show_opponents,
             "prompt_file": "ai_research/llm/prompts/v2.md",
         }
     with (run_dir / "experiment.json").open("w", encoding="utf-8") as f:
@@ -349,8 +382,11 @@ def main() -> int:
                         player_agent_slugs = {1: b_slug, 2: a_slug}
 
                     env = GameEnv(config)
+                    options = agent_options_for(
+                        player_agent_slugs, llm_options, args.llm_show_opponents
+                    )
                     agents = {
-                        p: make_agent(slug, llm_options)
+                        p: make_agent(slug, options)
                         for p, slug in player_agent_slugs.items()
                     }
                     match = play_one_game(env, agents, args.max_actions)
@@ -382,8 +418,11 @@ def main() -> int:
                 }
 
                 env = GameEnv(config)
+                options = agent_options_for(
+                    player_agent_slugs, llm_options, args.llm_show_opponents
+                )
                 agents = {
-                    p: make_agent(slug, llm_options)
+                    p: make_agent(slug, options)
                     for p, slug in player_agent_slugs.items()
                 }
                 match = play_one_game(env, agents, args.max_actions)

@@ -73,6 +73,23 @@ def test_window_size_equals_players_minus_one(players: int):
     assert f"Moves since your last turn ({players - 1}):" in text
 
 
+def test_opponents_are_unlabelled_by_default():
+    opponents = render_state(make_env(players=3), 1).split("Other players:")[1].split("Moves since")[0]
+    assert "[" not in opponents
+
+
+def test_opponents_can_be_labelled_by_type():
+    text = render_state(
+        make_env(players=3),
+        1,
+        opponents={1: "LLM (gpt-5)", 2: "Euclidean-distance greedy", 3: "graph-distance greedy"},
+    )
+    opponents = text.split("Other players:")[1].split("Moves since")[0]
+    assert "P2 [Euclidean-distance greedy]:" in opponents
+    assert "P3 [graph-distance greedy]:" in opponents
+    assert "P1 [" not in opponents, "本 agent 自己的身份不该出现"
+
+
 def test_window_lists_other_players_only():
     """窗口里只该有别人的操作，不该有自己的。"""
     env = make_env(players=3)

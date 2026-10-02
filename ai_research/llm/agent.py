@@ -36,7 +36,7 @@ from .tools import TOOL_SCHEMAS, execute_tool, parse_arguments
 PROMPT_PATH = Path(__file__).resolve().parent / "prompts" / "v2.md"
 
 
-def render_state(env: GameEnv, player: int) -> str:
+def render_state(env: GameEnv, player: int, opponents: Optional[Dict[int, str]] = None) -> str:
     """紧凑状态块（支持任意人数）。
 
     四块内容：
@@ -48,6 +48,10 @@ def render_state(env: GameEnv, player: int) -> str:
 
     第 4 块的窗口按「玩家身份」切（`history[自己上次行动之后:]`），
     不按回合数算 —— 有玩家无棋可走被跳过时，按数字算会错位。
+
+    `opponents` 可选：`{玩家号: 描述}`，传入时在每个对手后面标注它是谁
+    （例：`P2 [Euclidean-distance greedy]`）。**不含本 agent 自己的身份** ——
+    渲染时本来就会跳过自己。
     """
     state = env.state_dict()
     players = int(state["config"]["players"])
@@ -86,8 +90,9 @@ def render_state(env: GameEnv, player: int) -> str:
             continue
         theirs = sorted(pieces.get(other, []))
         inside = sum(1 for p in theirs if p in targets[other])
+        label = f" [{opponents[other]}]" if opponents and other in opponents else ""
         lines.append(
-            f"  P{other}: {inside}/{len(targets[other])} in target | "
+            f"  P{other}{label}: {inside}/{len(targets[other])} in target | "
             f"pieces ({len(theirs)}): {fmt(theirs)}"
         )
 
@@ -132,6 +137,7 @@ class LLMAgent(Agent):
         effort: str = "max",
         max_rounds: int = 3,
         context_turns: int = 0,
+        opponents: Optional[Dict[int, str]] = None,
         budget: Optional[Budget] = None,
         log_dir: Optional[Path] = None,
     ):
@@ -139,6 +145,7 @@ class LLMAgent(Agent):
         self.effort = effort
         self.max_rounds = max_rounds
         self.context_turns = context_turns
+        self.opponents = dict(opponents) if opponents else None
         self.budget = budget or Budget()
         self.log_dir = Path(log_dir) if log_dir else None
         self.slug = f"llm:{model}"
@@ -191,7 +198,7 @@ class LLMAgent(Agent):
         obs = env.observe()
         player = obs.current_player
         legal = obs.legal_actions
-        state_block = render_state(env, player)
+        state_block = render_state(env, player, self.opponents)
         log_path = self._log_path(env, player)
 
         self._ensure_conversation(env.state_dict().get("game_id"))
