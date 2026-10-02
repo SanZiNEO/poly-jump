@@ -177,7 +177,8 @@ Progress: you 3/20, opponent 5/20. Round 41. Last action: P2 (7,6,8)->(7,5,7).
 
 - 状态块约 800~900 字符（≈ 250 token）。
 - 规则摘要：从 `docs/03-game-rules.md` 压缩为固定文本（跳、连跳、目标区、胜负），**版本化**。
-- 提示词模板放 `prompts/v1.md`，运行时记录内容 hash，保证不同模型、不同批次用的是同一份提示词。
+- 提示词模板放 `ai_research/llm/prompts/v<N>.md`（版本化文件名），运行时记录用了哪一版，
+  保证不同模型、不同批次用的是同一份提示词。
 
 ## 8. 回合协议与失败处理
 
@@ -296,7 +297,7 @@ ai_research/llm/
 ├── agent.py        # LLMAgent(Agent)：choose(env) -> action，内部处理工具往返
 ├── provider.py     # 各 provider 的 chat/tool-call 适配（OpenAI 兼容优先）
 ├── tools.py        # get_state / get_moves / move 的定义与调度
-├── prompts/v1.md   # 版本化提示词
+├── prompts/v<N>.md # 版本化提示词
 └── transcript.py   # 每回合 JSONL 记录
 ```
 

@@ -268,6 +268,8 @@ def main() -> int:
                         help="LLM 思考强度")
     parser.add_argument("--llm-budget", type=float, default=9.0, help="LLM 费用上限（元）")
     parser.add_argument("--llm-max-rounds", type=int, default=3, help="LLM 每回合最多工具调用轮数")
+    parser.add_argument("--llm-context-turns", type=int, default=0,
+                        help="LLM 对话保留最近多少回合（0 = 完整对话，不截断）")
     args = parser.parse_args()
 
     agent_slugs = [s.strip() for s in args.agents.split(",") if s.strip()]
@@ -277,9 +279,6 @@ def main() -> int:
         return 1
     if len(agent_slugs) < args.players:
         print(f"玩家人数 {args.players}，但只提供了 {len(agent_slugs)} 个 AI，需要至少 {args.players} 个")
-        return 1
-    if any(is_llm_slug(s) for s in agent_slugs) and args.players != 2:
-        print("LLM agent 目前只支持 2 人局（状态渲染按双方设计）")
         return 1
 
     random.seed(args.seed)
@@ -297,6 +296,7 @@ def main() -> int:
     llm_options = {
         "effort": args.llm_effort,
         "max_rounds": args.llm_max_rounds,
+        "context_turns": args.llm_context_turns,
         "budget": llm_budget,
         "log_dir": run_dir / "llm",
     }
@@ -314,10 +314,11 @@ def main() -> int:
     if uses_llm:
         experiment["llm"] = {
             "interface": "tool_query",
+            "conversation": "persistent" if not args.llm_context_turns else f"last_{args.llm_context_turns}_turns",
             "effort": args.llm_effort,
             "max_rounds": args.llm_max_rounds,
             "budget_cny": args.llm_budget,
-            "prompt_file": "ai_research/llm/prompts/v1.md",
+            "prompt_file": "ai_research/llm/prompts/v2.md",
         }
     with (run_dir / "experiment.json").open("w", encoding="utf-8") as f:
         json.dump(experiment, f, ensure_ascii=False, indent=2)
