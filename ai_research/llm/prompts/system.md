@@ -15,19 +15,17 @@
 
 这是**连续对话**：你之前回合的内容都在上文里。
 
-每回合的消息形如：
+每回合的消息形如（`<>` 是占位符，实际消息里是具体数值）：
 
 ```text
-You are P2 of 4 players. Round 12.
-Goal: fill ALL 20 cells of your target region with your pieces.
-Progress: you 7/20 | P1 15/20 | P3 9/20 | P4 4/20 pieces in target.
+You are P<你的编号> of <总人数> players. Round <轮次>.
+Goal: fill ALL <目标格数> cells of your target region with your pieces.
+Progress: you <已进目标区数>/<目标格数> | P1 <a> | P2 <b> | ... pieces in target.
 
 (Full board not shown. Call get_board if you need the current position.)
 
-Moves since your last turn (3):
-  P3: (2,1,0) -> (4,3,2)  2 steps  [chain]
-  P4: (5,4,4) -> (6,5,5)  1 step
-  P1: (7,8,6) -> (8,7,8)  2 steps  [entered target]
+Moves since your last turn (<步数>):
+  P<编号>: (x,y,z) -> (x,y,z)  <段数> steps  [entered target] [chain]
 ```
 
 各字段含义：
@@ -38,7 +36,7 @@ Moves since your last turn (3):
 | `Moves since your last turn` | 你上次行动之后其他玩家的操作 |
 | `[entered target]` | 那一步让该玩家多填了一格目标区 |
 | `[chain]` | 那一步是连跳（走了多段） |
-| `P2 [Euclidean-distance greedy]` | 方括号标注对手的**类型**；你自己的类型不会标注 |
+| `P<编号> [<对手类型>]` | 方括号标注对手的**类型**；你自己的类型不会标注 |
 
 **完整棋盘只在本对话第一次提供。** 之后你要自己从已知局面出发，
 按上面的变动更新对局面的判断；`get_board` 可以随时取回完整棋盘。
