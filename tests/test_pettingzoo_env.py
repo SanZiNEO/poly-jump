@@ -76,3 +76,38 @@ def test_aec_agent_iter_last_and_action_mask(mode):
         steps += 1
         if steps >= 10:
             break
+
+
+def test_observation_includes_agent_target_mask():
+    """观测必须包含「本 agent 的目标区掩码」，否则策略不知道该往哪走。"""
+    env = PolyJumpAECEnv(make_config(), action_mode="full_action")
+    env.reset()
+    state = env.env.state_dict()
+    n = len(state["points"])
+
+    for agent in env.possible_agents:
+        obs = env.observe(agent)
+        assert obs.shape == env.observation_space(agent).shape
+
+        player = int(agent.split("_")[1])
+        target = {tuple(int(v) for v in p) for p in state["targets"][str(player)]}
+        mask = obs[4 * n:5 * n].tolist()
+        expected = [1.0 if tuple(p) in target else 0.0 for p in state["points"]]
+        assert mask == expected
+        assert int(sum(mask)) == len(target)
+
+
+def test_target_mask_is_agent_relative():
+    """掩码按 agent 视角生成：两人局的目标区互不相交。"""
+    env = PolyJumpAECEnv(make_config(), action_mode="full_action")
+    env.reset()
+    n = len(env.env.state_dict()["points"])
+
+    mask1 = env.observe("player_1")[4 * n:5 * n].tolist()
+    mask2 = env.observe("player_2")[4 * n:5 * n].tolist()
+
+    assert mask1 != mask2
+    inside1 = {i for i, v in enumerate(mask1) if v}
+    inside2 = {i for i, v in enumerate(mask2) if v}
+    assert inside1 and inside2
+    assert not (inside1 & inside2)

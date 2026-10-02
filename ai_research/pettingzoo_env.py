@@ -6,6 +6,10 @@
 - primitive：一次环境 step = 一个最小移动 step（单步/单跳/两格跳）
 
 底层复用 `backend.game.env.GameEnv`，不改游戏核心。
+
+观测为定长 float32 向量，按 agent 视角生成，布局见 `_flatten_observation`：
+棋盘点坐标 + 每点归属 + **目标区掩码（本 agent 的）** + 当前玩家 one-hot。
+目标区掩码是跨几何泛化的前提 —— 换几何模型时点集与坐标全变，策略只能靠它知道该往哪走。
 """
 
 from __future__ import annotations
@@ -57,10 +61,11 @@ if PETTINGZOO_AVAILABLE:
             self.num_points = len(state["points"])
             self._point_index = {tuple(p): i for i, p in enumerate(state["points"])}
 
+            # 点坐标(3N) + 每点归属(N) + 目标区掩码(N) + 当前玩家 one-hot(P)
             observation_space = spaces.Box(
                 low=-1000.0,
                 high=1000.0,
-                shape=(self.num_points * 3 + self.num_points + self.players,),
+                shape=(self.num_points * 3 + self.num_points * 2 + self.players,),
                 dtype=np.float32,
             )
             action_space = spaces.Discrete(MAX_ACTIONS)
@@ -108,9 +113,21 @@ if PETTINGZOO_AVAILABLE:
 
         def observe(self, agent: str):
             state = self.env.state_dict()
-            return self._flatten_observation(state)
+            return self._flatten_observation(state, agent)
 
-        def _flatten_observation(self, state: dict) -> "np.ndarray":
+        def _flatten_observation(self, state: dict, agent: str) -> "np.ndarray":
+            """观测布局（按 agent 视角生成，长度 = 3N + 2N + P）：
+
+                [0 : 3N)      棋盘点坐标（静态，不随局面变化）
+                [3N : 4N)     每点归属（0 = 空，1..P = 玩家编号）
+                [4N : 5N)     目标区掩码（该点是否属于**本 agent**的目标区）
+                [5N : 5N+P)   当前行动玩家 one-hot
+
+            N = num_points，P = players。
+
+            目标区掩码是跨几何泛化的前提：换一个几何模型时，点集和坐标全变了，
+            策略只能靠这个掩码知道"该往哪里走"。
+            """
             obs = []
 
             for p in state["points"]:
@@ -124,6 +141,13 @@ if PETTINGZOO_AVAILABLE:
                 if idx is not None:
                     owner_by_index[idx] = int(owner)
             obs.extend([float(v) for v in owner_by_index])
+
+            player_index = int(agent.split("_")[1])
+            target = {
+                tuple(int(v) for v in p)
+                for p in state.get("targets", {}).get(str(player_index), [])
+            }
+            obs.extend([1.0 if tuple(p) in target else 0.0 for p in state["points"]])
 
             current = int(state.get("current_player", 1))
             for i in range(1, self.players + 1):
