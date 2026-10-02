@@ -2,7 +2,7 @@
 
 这不是正式测试，也不是正式几何实现。
 运行：
-    python tests/b_model_probe.py
+    python tools/b_model_probe.py
 """
 
 from __future__ import annotations

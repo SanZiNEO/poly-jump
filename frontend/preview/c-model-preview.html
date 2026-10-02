@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PolyJump · D 模型 14 向探索</title>
+  <title>PolyJump · C 模型 20 向探索</title>
   <link rel="stylesheet" href="/style.css">
   <script type="importmap">
   {
@@ -17,21 +17,25 @@
 <body>
   <section id="preview-page" class="page">
     <header class="menu-header">
-      <h1>D 模型 · 14 向探索</h1>
-      <p class="subtitle">修正版外接金字塔 + 8 + 6 = 14 向</p>
+      <h1>C 模型 · 20 向探索</h1>
+      <p class="subtitle">12 向 + 8 向 = 20 向，观察能连成什么图形</p>
     </header>
 
     <div class="preview-layout">
       <div class="preview-controls">
-        <h2>几何</h2>
+        <h2>C 模型点集</h2>
         <label class="switch-row">
-          <input type="checkbox" id="show-ext" checked>
-          <span>中心 5×5×5 + 修正外接金字塔（1+9）</span>
+          <input type="checkbox" id="show-l1" checked>
+          <span>L1 球 R=6 全整数点（实际 C 模型）</span>
         </label>
         <hr>
         <label class="switch-row">
+          <input type="checkbox" id="show-ext-pyramid">
+          <span>外接金字塔修正（1+9）</span>
+        </label>
+        <label class="switch-row">
           <input type="checkbox" id="show-lines" checked>
-          <span>显示 14 向连线</span>
+          <span>显示 20 向连线</span>
         </label>
         <div class="preview-stats">
           <strong>当前点数</strong>
@@ -43,6 +47,6 @@
     </div>
   </section>
 
-  <script type="module" src="/d_model_preview.js"></script>
+  <script type="module" src="./c_model_preview.js"></script>
 </body>
 </html>
