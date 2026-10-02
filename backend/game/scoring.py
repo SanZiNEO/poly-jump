@@ -1,85 +1,172 @@
-"""积分制接口。
+"""积分策略接口。
 
-目前定义积分规则配置和基础计算框架。
-具体连跳临时分、失败扣分比例、吃子分值等都可以在 configuration 中后续调整。
+设计原则：**内核产事实，策略定价**。
+
+- `ActionContext` / `FinishContext` 是对局事实的只读快照，不含任何价值判断；
+- `ScoringPolicy` 决定这些事实值多少分；
+- 框架自带两个实现：
+  - `NullScoring`：不计分（所有变化恒为 0）
+  - `WeightedScoring`：按 `config.scoring` 的权重计分（框架默认）
+
+外部程序可以自带策略，无需改动内核：
+
+    from backend.game.env import GameEnv
+    from backend.game.scoring import ActionContext, ScoreDelta
+
+    class EnterTargetScoring:
+        \"\"\"只给"进入目标区"计分的自定义策略。\"\"\"
+
+        def on_action(self, ctx: ActionContext) -> ScoreDelta:
+            if ctx.entered_target:
+                return ScoreDelta(scores={ctx.player: 3})
+            return ScoreDelta()
+
+        def on_finish(self, ctx) -> dict:
+            return dict(ctx.scores)
+
+    env = GameEnv(config, scoring=EnterTargetScoring())
+
+策略通过 `GameEnv` / `GameState` 的构造参数注入，**不进入 `PolyJumpConfig`** ——
+配置需要可 JSON 序列化，装不下策略对象。
+
+`GameState.clone()`（搜索/模拟用）**按引用共享策略**，不深拷贝，
+因此自定义策略不必可拷贝，也不会在 MCTS 里被复制成千上万次。
 """
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Protocol, runtime_checkable
 
-from .config import CaptureMode, PolyJumpConfig
 from .board import Board
+from .config import CaptureMode, PolyJumpConfig
 
 
-class ScoringEngine:
+@dataclass(frozen=True)
+class ActionContext:
+    """一次 action 的事实快照（内核产生，不含价值判断）。"""
+
+    player: int
+    path: List[list]
+    captured: int
+    """本次 action 吃掉的棋子数。"""
+    entered_target: bool
+    """是否有棋子**从目标区外进入**目标区。
+
+    内核统一定义：起点在目标区外、终点在目标区内才算；
+    目标区内部移动、或只是穿过目标区都不算。策略直接读这个布尔值，
+    不必各自重复推导（推导口径不一致会让不同策略对同一局面给出矛盾结论）。
+    """
+    board: Board
+    """结算后的棋盘。自定义策略依赖局面信息时读它。"""
+    config: PolyJumpConfig
+    round: int
+
+
+@dataclass(frozen=True)
+class FinishContext:
+    """对局结束的事实快照。"""
+
+    winner: Optional[int]
+    players: int
+    board: Board
+    scores: Dict[int, int]
+    """结算前的正式分。"""
+    temp_scores: Dict[int, int]
+    """结算前的临时分（连跳累计）。"""
+    config: PolyJumpConfig
+
+
+@dataclass(frozen=True)
+class ScoreDelta:
+    """一次 action 产生的分数变化（缺省的键视为 0）。"""
+
+    scores: Dict[int, int] = field(default_factory=dict)
+    temp_scores: Dict[int, int] = field(default_factory=dict)
+
+
+@runtime_checkable
+class ScoringPolicy(Protocol):
+    """积分策略接口。"""
+
+    def on_action(self, ctx: ActionContext) -> ScoreDelta:
+        """一次 action 结算后，返回各玩家的分数变化。"""
+        ...
+
+    def on_finish(self, ctx: FinishContext) -> Dict[int, int]:
+        """对局结束时结算，返回**最终正式分**（整份，不是增量）。"""
+        ...
+
+
+class NullScoring:
+    """不计分：所有变化恒为 0。"""
+
+    def on_action(self, ctx: ActionContext) -> ScoreDelta:
+        return ScoreDelta()
+
+    def on_finish(self, ctx: FinishContext) -> Dict[int, int]:
+        return dict(ctx.scores)
+
+
+class WeightedScoring:
+    """按 `config.scoring` 的权重计分（框架默认规则）。
+
+    事件与分值：
+
+    | 事件 | 分值 | 配置项 |
+    |---|---|---|
+    | 连跳（路径超过 2 个点时，多出的每段） | 临时分 | `chain_jump_points` / `chain_temp` / `chain_max_scoring` |
+    | 吃子 | 正式分 | `capture_points` |
+    | 进入目标区 | 正式分 | `target_zone_points` |
+    | 对局结束 | 正式分 | 吃子模式按存活棋子数 `survivor_piece_points`；否则 `first_finish_reward` |
+    | 结算时的临时分 | 胜者保留、败者扣除 | `chain_temp` |
+
+    `enabled = False` 时所有 action 计分为 0；对局结束时的结算沿用既有语义，
+    **不**受 `enabled` 影响（即胜者仍会拿到 `first_finish_reward`）。
+    """
+
     def __init__(self, config: PolyJumpConfig):
         self.config = config
         self.scoring = config.scoring
 
-    def assess_action(
-        self,
-        player: int,
-        path: List[List[int]],
-        capture_count: int = 0,
-        reached_target: bool = False,
-    ) -> dict:
-        """评估一次 action 产生的分数变化。
+    def on_action(self, ctx: ActionContext) -> ScoreDelta:
+        if not self.scoring.enabled:
+            return ScoreDelta()
 
-        返回：
-        - chain_temp：连跳临时分（每多一次连跳 +1）
-        - capture_points：吃子分
-        - target_points：进入目标区分
-        """
-        chain_jumps = max(0, len(path) - 1) if len(path) > 2 else 0
+        chain_jumps = max(0, len(ctx.path) - 1) if len(ctx.path) > 2 else 0
         # 只限制计分的连跳次数，不限制连跳本身长度
         if self.scoring.chain_max_scoring > 0:
             chain_jumps = min(chain_jumps, self.scoring.chain_max_scoring)
-        chain_temp = 0
-        if self.scoring.enabled and self.scoring.chain_temp:
-            chain_temp = chain_jumps * self.scoring.chain_jump_points
 
-        capture_points = 0
-        if self.scoring.enabled:
-            capture_points = capture_count * self.scoring.capture_points
+        temp = chain_jumps * self.scoring.chain_jump_points if self.scoring.chain_temp else 0
+        scores = ctx.captured * self.scoring.capture_points
+        if ctx.entered_target:
+            scores += self.scoring.target_zone_points
 
-        target_points = 0
-        if self.scoring.enabled and reached_target:
-            target_points = self.scoring.target_zone_points
+        return ScoreDelta(
+            scores={ctx.player: scores} if scores else {},
+            temp_scores={ctx.player: temp} if temp else {},
+        )
 
-        return {
-            "chain_temp": chain_temp,
-            "capture_points": capture_points,
-            "target_points": target_points,
-        }
+    def on_finish(self, ctx: FinishContext) -> Dict[int, int]:
+        if ctx.winner is None:
+            return dict(ctx.scores)
 
-    def finalize(
-        self,
-        winner: Optional[int],
-        players: int,
-        board: Board,
-        scores: Dict[int, int],
-        temp_scores: Dict[int, int],
-    ) -> Dict[int, int]:
-        """对局结束时结算最终积分。"""
-        if winner is None:
-            return dict(scores)
+        final = dict(ctx.scores)
 
-        final = dict(scores)
-
-        if self.config.capture.mode == CaptureMode.CAPTURE:
+        if ctx.config.capture.mode == CaptureMode.CAPTURE:
             # 西洋棋胜利：按存活棋子数加分
-            survivor = len(board.pieces_for_player(winner))
-            final[winner] = final.get(winner, 0) + survivor * self.scoring.survivor_piece_points
+            survivor = len(ctx.board.pieces_for_player(ctx.winner))
+            final[ctx.winner] = final.get(ctx.winner, 0) + survivor * self.scoring.survivor_piece_points
         else:
             # 中国跳棋/混合模式：先完成目标区获胜，给固定奖励
-            final[winner] = final.get(winner, 0) + self.scoring.first_finish_reward
+            final[ctx.winner] = final.get(ctx.winner, 0) + self.scoring.first_finish_reward
 
         # 临时分：胜者保留；败者临时分按比例扣除（当前简单实现为全扣）
         if self.scoring.chain_temp:
-            for player in range(1, players + 1):
-                temp = temp_scores.get(player, 0)
-                if player == winner:
+            for player in range(1, ctx.players + 1):
+                temp = ctx.temp_scores.get(player, 0)
+                if player == ctx.winner:
                     final[player] = final.get(player, 0) + temp
                 else:
                     final[player] = final.get(player, 0) - temp

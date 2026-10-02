@@ -47,7 +47,17 @@ scores
 temp_scores
 ```
 
-外部程序可以用积分作为 reward。
+积分由可插拔的**积分策略**产生（接口见 [10-semantics.md](./10-semantics.md) 第 5 节）：
+
+```python
+from backend.game.env import GameEnv
+
+env = GameEnv(config)                      # 默认 WeightedScoring
+env = GameEnv(config, scoring=MyPolicy())  # 自定义
+```
+
+外部程序既可以直接把 `scores` 当作 reward，也可以自带策略实现任意计分/奖励规则 ——
+内核只提供事实（走了几段、吃了几枚、是否进入目标区、棋盘），不规定它们值多少分。
 
 ## 路径度量
 

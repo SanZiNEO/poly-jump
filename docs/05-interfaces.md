@@ -32,7 +32,9 @@ ai_type=chebyshev            # 切比雪夫距离
 ```python
 from backend.game.env import GameEnv
 
-env = GameEnv(config)
+env = GameEnv(config)                  # 积分策略默认 WeightedScoring（按 config 权重）
+env = GameEnv(config, scoring=policy)  # 也可注入自定义积分策略，见 10-semantics.md
+
 result = env.reset()
 
 actions = env.action_space()
@@ -48,6 +50,7 @@ action_space()
 execute_action(action)
 observe()
 state_dict()
+clone()
 ```
 
 ### ActionResult
@@ -104,7 +107,7 @@ path_stats
 ```text
 player
 path
-scoring
+score_delta
 scores
 temp_scores
 step_count
@@ -112,6 +115,9 @@ straight_distance
 path_distance
 step_distances
 ```
+
+`score_delta` 是本次 action 的分数变化（`{scores, temp_scores}`），
+由积分策略给出 —— 见 [10-semantics.md](./10-semantics.md) 第 5 节。
 
 ## 5. 外部 AI 接入方式
 

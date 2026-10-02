@@ -11,13 +11,21 @@ from .config import PolyJumpConfig
 from .movement import ActionGenerator, ActionValidator
 from .path_metrics import path_metrics
 from .rules import ActionApplier, check_winner
-from .scoring import ScoringEngine
+from .scoring import (
+    ActionContext,
+    FinishContext,
+    ScoringPolicy,
+    WeightedScoring,
+)
 
 
 class GameState:
-    def __init__(self, config: PolyJumpConfig):
+    def __init__(self, config: PolyJumpConfig, scoring: Optional[ScoringPolicy] = None):
+        if scoring is not None and not isinstance(scoring, ScoringPolicy):
+            raise TypeError("scoring 必须实现 ScoringPolicy（on_action / on_finish）")
         self.id: str = uuid.uuid4().hex
         self.config = config
+        self.scoring: ScoringPolicy = scoring or WeightedScoring(config)
         self.board: Board = Board(config)
         self.current_player: int = 1
         self.winner: Optional[int] = None
@@ -63,31 +71,40 @@ class GameState:
         player = self.current_player
         capture_count = ActionApplier(self.config).apply(self.board, path_t, player)
 
-        # 积分：连跳临时分 / 吃子分 / 进入目标区分
-        engine = ScoringEngine(self.config)
+        # 积分：把事实交给策略定价（策略由构造参数注入，默认按配置权重）
         target_set = self.board.player_targets.get(player, set())
         # 只有“从目标区外进入目标区”才算一次；目标区内移动/穿过不算
-        reached_target = (
+        entered_target = (
             tuple(path_t[0]) not in target_set
             and tuple(path_t[-1]) in target_set
         )
-        assessment = engine.assess_action(
-            player, path_t, capture_count, reached_target
-        )
-        if self.config.scoring.enabled:
-            self.temp_scores[player] += assessment["chain_temp"]
-            self.scores[player] += (
-                assessment["capture_points"] + assessment["target_points"]
+        score_delta = self.scoring.on_action(
+            ActionContext(
+                player=player,
+                path=[list(p) for p in path_t],
+                captured=capture_count,
+                entered_target=entered_target,
+                board=self.board,
+                config=self.config,
+                round=self.action_count // self.config.players + 1,
             )
+        )
+        for who, value in score_delta.scores.items():
+            self.scores[who] = self.scores.get(who, 0) + value
+        for who, value in score_delta.temp_scores.items():
+            self.temp_scores[who] = self.temp_scores.get(who, 0) + value
 
         self.winner = check_winner(self.board, self.config)
         if self.winner is not None:
-            self.scores = engine.finalize(
-                self.winner,
-                self.config.players,
-                self.board,
-                self.scores,
-                self.temp_scores,
+            self.scores = self.scoring.on_finish(
+                FinishContext(
+                    winner=self.winner,
+                    players=self.config.players,
+                    board=self.board,
+                    scores=self.scores,
+                    temp_scores=self.temp_scores,
+                    config=self.config,
+                )
             )
 
         metrics = path_metrics(path_t)
@@ -95,7 +112,10 @@ class GameState:
             {
                 "player": player,
                 "path": [list(p) for p in path_t],
-                "scoring": assessment,
+                "score_delta": {
+                    "scores": dict(score_delta.scores),
+                    "temp_scores": dict(score_delta.temp_scores),
+                },
                 "scores": dict(self.scores),
                 "temp_scores": dict(self.temp_scores),
                 "step_count": metrics["step_count"],
@@ -108,6 +128,19 @@ class GameState:
         if self.winner is None:
             self._advance_turn()
         return True
+
+    def __deepcopy__(self, memo):
+        """深拷贝状态，但**按引用共享**积分策略。
+
+        搜索（MCTS 等）会高频调用 `clone()`：策略既不该被复制成千上万次，
+        也不该要求外部自定义的策略可深拷贝。
+        """
+        cls = self.__class__
+        new = cls.__new__(cls)
+        memo[id(self)] = new
+        for key, value in self.__dict__.items():
+            setattr(new, key, value if key == "scoring" else copy.deepcopy(value, memo))
+        return new
 
     def clone(self) -> "GameState":
         """深拷贝当前状态，用于搜索/模拟。"""

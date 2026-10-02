@@ -74,7 +74,34 @@ scores       正式积分
 temp_scores  连跳临时分
 ```
 
-规则：
+**积分由策略决定，不写死在内核里。** 内核只产生事实（一次 action 走了几段、吃了几枚、
+是否有棋子从目标区外进入目标区、结算后的棋盘），策略负责定价：
+
+```python
+from backend.game.env import GameEnv
+
+env = GameEnv(config)                      # 默认策略 WeightedScoring
+env = GameEnv(config, scoring=MyPolicy())  # 注入自定义策略
+```
+
+策略接口（`backend/game/scoring.py`）：
+
+```text
+on_action(ctx: ActionContext) -> ScoreDelta      # 一次 action 的分数变化
+on_finish(ctx: FinishContext) -> dict[int, int]  # 对局结束时的最终正式分（整份）
+```
+
+框架自带两个实现：
+
+| 实现 | 行为 |
+|---|---|
+| `WeightedScoring` | 按 `config.scoring` 权重计分（框架默认） |
+| `NullScoring` | 所有变化恒为 0 |
+
+策略通过构造参数注入，**不进入 `PolyJumpConfig`**（配置需可 JSON 序列化）；
+`clone()` 按引用共享策略，不做深拷贝。
+
+### 以下规则属于 `WeightedScoring`（不是内核语义）
 
 - 连跳每次产生临时分。
 - 对局结束时：
@@ -82,6 +109,8 @@ temp_scores  连跳临时分
   - 败者扣除临时分；
   - 胜利奖励、吃子分、目标区进入分进入正式分。
 - `chain_max_scoring` 只限制计分的连跳次数，不限制连跳本身的 step 数。
+- `scoring.enabled = False` 时 action 计分恒为 0，但**对局结束的结算不受 `enabled` 影响**
+  （胜者仍会拿到 `first_finish_reward` / 存活棋子分）。
 
 ## 6. round 定义
 

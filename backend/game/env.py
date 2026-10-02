@@ -21,6 +21,7 @@ from .actions import action_index
 from .config import PolyJumpConfig
 from .game_state import GameState
 from .path_metrics import summarize_actions
+from .scoring import ScoringPolicy
 from .serializers import state_to_dict
 
 
@@ -43,12 +44,14 @@ class ActionResult:
 
 
 class GameEnv:
-    def __init__(self, config: PolyJumpConfig):
+    def __init__(self, config: PolyJumpConfig, scoring: Optional[ScoringPolicy] = None):
+        """`scoring` 为可选积分策略；不传则用 `WeightedScoring`（按 config 权重）。"""
         self.config = config
-        self.state = GameState(config)
+        self.scoring = scoring
+        self.state = GameState(config, scoring)
 
     def reset(self) -> ActionResult:
-        self.state = GameState(self.config)
+        self.state = GameState(self.config, self.scoring)
         return self.observe()
 
     def legal_actions(self) -> List[list]:
@@ -93,8 +96,8 @@ class GameEnv:
         )
 
     def clone(self) -> "GameEnv":
-        """返回当前环境的深拷贝，用于搜索/模拟。"""
-        new_env = GameEnv(self.config)
+        """返回当前环境的深拷贝，用于搜索/模拟（积分策略按引用共享）。"""
+        new_env = GameEnv(self.config, self.scoring)
         new_env.state = self.state.clone()
         return new_env
 
