@@ -18,6 +18,7 @@
 | [12-supplementary-experiments.md](./12-supplementary-experiments.md) | 补充实验（可选阅读） |
 | [13-llm-agent-benchmark.md](./13-llm-agent-benchmark.md) | LLM Agent 对局测试设计（草案，未实现） |
 | [14-local-ai-pk.md](./14-local-ai-pk.md) | 本地 AI PK（设计 + 记录） |
+| [15-llm-state-render-issue.md](./15-llm-state-render-issue.md) | LLM 状态渲染缺陷记录 |
 
 早期设计文档已归档到：
 
