@@ -9,7 +9,7 @@ from backend.game.config import (
     PolyJumpConfig,
     ScoringConfig,
 )
-from backend.game.scoring import ActionContext, FinishContext, ScoreDelta, WeightedScoring
+from backend.game.scoring import ActionContext, FinishContext, WeightedScoring
 
 
 def make_parts(scoring: ScoringConfig | None = None, capture_mode: CaptureMode = CaptureMode.NONE):
@@ -18,7 +18,7 @@ def make_parts(scoring: ScoringConfig | None = None, capture_mode: CaptureMode =
         board_size=(9, 9, 9),
         players=2,
         direction_set=[6],
-        scoring=scoring or ScoringConfig(enabled=True),
+        scoring=scoring or ScoringConfig(policy="weighted"),
         capture=CaptureConfig(mode=capture_mode),
     )
     return WeightedScoring(config), config, Board(config)
@@ -46,7 +46,7 @@ def test_chain_jump_scores_by_extra_jumps():
 
 def test_chain_scoring_cap_limits_scored_jumps():
     policy, config, board = make_parts(
-        ScoringConfig(enabled=True, chain_jump_points=1, chain_max_scoring=5)
+        ScoringConfig(policy="weighted", chain_jump_points=1, chain_max_scoring=5)
     )
     # 实际连跳 10 次，但计分上限 5
     path = [[0, 0, 0]] + [[i * 2, 0, 0] for i in range(1, 11)]
@@ -63,14 +63,6 @@ def test_capture_points():
     policy, config, board = make_parts()
     delta = policy.on_action(ctx(config, board, [[0, 0, 0], [2, 0, 0]], captured=3))
     assert delta.scores[1] == 6  # capture_points=2
-
-
-def test_disabled_scoring_produces_no_action_delta():
-    policy, config, board = make_parts(ScoringConfig(enabled=False))
-    delta = policy.on_action(
-        ctx(config, board, [[0, 0, 0], [2, 0, 0], [4, 0, 0]], captured=5, entered_target=True)
-    )
-    assert delta == ScoreDelta()
 
 
 def test_finish_winner_keeps_temp_loser_loses():
@@ -93,7 +85,7 @@ def test_finish_winner_keeps_temp_loser_loses():
 
 def test_finish_capture_mode_scores_survivors():
     policy, config, board = make_parts(
-        ScoringConfig(enabled=True, survivor_piece_points=3),
+        ScoringConfig(policy="weighted", survivor_piece_points=3),
         capture_mode=CaptureMode.CAPTURE,
     )
     survivors = len(board.pieces_for_player(1))

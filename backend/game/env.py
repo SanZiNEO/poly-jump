@@ -45,7 +45,7 @@ class ActionResult:
 
 class GameEnv:
     def __init__(self, config: PolyJumpConfig, scoring: Optional[ScoringPolicy] = None):
-        """`scoring` 为可选积分策略；不传则用 `WeightedScoring`（按 config 权重）。"""
+        """`scoring` 为可选积分策略；不传则按 `config.scoring.policy` 选择内置策略。"""
         self.config = config
         self.scoring = scoring
         self.state = GameState(config, scoring)

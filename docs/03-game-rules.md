@@ -51,11 +51,15 @@
 
 ## 5. 积分制
 
-配置：
+积分由**策略**决定（接口见 [10-semantics.md](./10-semantics.md) 第 5 节）。
+`scoring.policy` 选择内置策略：
 
 ```text
-ScoringConfig
+scoring.policy = "none"       # 完全不计分（默认）
+scoring.policy = "weighted"   # 按下面的权重计分
 ```
+
+`weighted` 的规则：
 
 | 规则 | 默认分 |
 |---|---|

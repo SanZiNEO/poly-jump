@@ -40,14 +40,14 @@ class TargetOnlyScoring:
         return dict(ctx.scores)
 
 
-def make_config() -> PolyJumpConfig:
-    """小棋盘 + 关掉内置计分，便于验证「分数完全由注入的策略决定」。"""
+def make_config(policy: str = "none") -> PolyJumpConfig:
+    """小棋盘；`policy` 选择内置积分策略。"""
     return PolyJumpConfig(
         board_size=(5, 5, 5),
         players=2,
         direction_set=[6],
         initial_layout=InitialLayoutConfig(layers=2),
-        scoring=ScoringConfig(enabled=False),
+        scoring=ScoringConfig(policy=policy),
     )
 
 
@@ -73,8 +73,36 @@ def test_invalid_policy_rejected_at_construction():
         GameState(make_config(), scoring=object())
 
 
-def test_default_policy_is_weighted_scoring():
-    assert isinstance(GameState(make_config()).scoring, WeightedScoring)
+def test_config_policy_selects_builtin_policy():
+    assert isinstance(GameState(make_config("none")).scoring, NullScoring)
+    assert isinstance(GameState(make_config("weighted")).scoring, WeightedScoring)
+
+
+def test_injected_policy_overrides_config():
+    policy = TargetOnlyScoring()
+    assert GameState(make_config("weighted"), scoring=policy).scoring is policy
+
+
+def make_finish_ctx(config: PolyJumpConfig) -> FinishContext:
+    return FinishContext(
+        winner=1,
+        players=2,
+        board=GameState(config).board,
+        scores={1: 0, 2: 0},
+        temp_scores={1: 5, 2: 3},
+        config=config,
+    )
+
+
+def test_policy_none_really_means_no_scoring():
+    """`policy="none"` 是真正的总开关：终局结算也不加分。"""
+    assert NullScoring().on_finish(make_finish_ctx(make_config("none"))) == {1: 0, 2: 0}
+
+    # 对照：weighted 给胜者发胜利奖励并保留其临时分，败者扣除临时分
+    weighted = WeightedScoring(make_config("weighted"))
+    result = weighted.on_finish(make_finish_ctx(make_config("weighted")))
+    assert result[1] == 0 + 10 + 5
+    assert result[2] == 0 - 3
 
 
 def test_null_scoring_leaves_every_score_at_zero():

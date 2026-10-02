@@ -266,7 +266,7 @@ function readConfig() {
       layers,
     },
     scoring: {
-      enabled: document.getElementById("scoring-enabled").checked,
+      policy: document.getElementById("scoring-enabled").checked ? "weighted" : "none",
       first_finish_reward: parseInt(document.getElementById("first-finish-reward").value, 10),
       chain_jump_points: parseInt(document.getElementById("chain-jump-points").value, 10),
       chain_temp: document.getElementById("chain-temp").checked,

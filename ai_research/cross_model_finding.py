@@ -63,7 +63,7 @@ def make_config(geometry: str) -> PolyJumpConfig:
         allow_stay_in_enemy=False,
         first_to_finish_wins=True,
     )
-    scoring = ScoringConfig(enabled=False)
+    scoring = ScoringConfig(policy="none")
 
     if geometry == "A":
         return PolyJumpConfig(

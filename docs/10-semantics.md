@@ -93,12 +93,13 @@ on_finish(ctx: FinishContext) -> dict[int, int]  # 对局结束时的最终正�
 
 框架自带两个实现：
 
-| 实现 | 行为 |
-|---|---|
-| `WeightedScoring` | 按 `config.scoring` 权重计分（框架默认） |
-| `NullScoring` | 所有变化恒为 0 |
+| 实现 | 由谁选用 | 行为 |
+|---|---|---|
+| `NullScoring` | `scoring.policy = "none"`（默认） | 所有变化恒为 0，**终局结算也不加分** |
+| `WeightedScoring` | `scoring.policy = "weighted"` | 按 `config.scoring` 权重计分 |
 
-策略通过构造参数注入，**不进入 `PolyJumpConfig`**（配置需可 JSON 序列化）；
+`config.scoring.policy` 选择内置策略；通过构造参数注入的策略**优先级更高**。
+策略对象本身**不进入 `PolyJumpConfig`**（配置需可 JSON 序列化）；
 `clone()` 按引用共享策略，不做深拷贝。
 
 ### 以下规则属于 `WeightedScoring`（不是内核语义）
@@ -109,10 +110,6 @@ on_finish(ctx: FinishContext) -> dict[int, int]  # 对局结束时的最终正�
   - 败者扣除临时分；
   - 胜利奖励、吃子分、目标区进入分进入正式分。
 - `chain_max_scoring` 只限制计分的连跳次数，不限制连跳本身的 step 数。
-- `scoring.enabled = False` 时 action 计分恒为 0，但**对局结束的结算不受 `enabled` 影响**
-  （胜者仍会拿到 `first_finish_reward` / 存活棋子分）。
-  这个语义从第一版起就如此：`enabled` 是**过程计分开关**，不是积分系统总开关。
-  需要**完全不计分**时注入 `NullScoring`，而不是依赖 `enabled`。
 
 ## 6. round 定义
 

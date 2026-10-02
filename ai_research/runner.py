@@ -108,7 +108,7 @@ def make_b_config(radius: int = 6, players: int = 2) -> PolyJumpConfig:
             allow_stay_in_enemy=False,
             first_to_finish_wins=True,
         ),
-        scoring=ScoringConfig(enabled=False),
+        scoring=ScoringConfig(policy="none"),
     )
 
 
@@ -154,7 +154,7 @@ def make_a_config(
             allow_stay_in_enemy=False,
             first_to_finish_wins=True,
         ),
-        scoring=ScoringConfig(enabled=False),
+        scoring=ScoringConfig(policy="none"),
     )
 
 

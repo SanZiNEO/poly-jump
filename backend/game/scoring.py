@@ -5,8 +5,8 @@
 - `ActionContext` / `FinishContext` 是对局事实的只读快照，不含任何价值判断；
 - `ScoringPolicy` 决定这些事实值多少分；
 - 框架自带两个实现：
-  - `NullScoring`：不计分（所有变化恒为 0）
-  - `WeightedScoring`：按 `config.scoring` 的权重计分（框架默认）
+  - `NullScoring`：不计分（所有变化恒为 0）—— `scoring.policy = "none"`（默认）
+  - `WeightedScoring`：按 `config.scoring` 的权重计分 —— `scoring.policy = "weighted"`
 
 外部程序可以自带策略，无需改动内核：
 
@@ -98,6 +98,16 @@ class ScoringPolicy(Protocol):
         ...
 
 
+def build_policy(config: PolyJumpConfig) -> ScoringPolicy:
+    """按 `config.scoring.policy` 选择内置策略。
+
+    仅在调用方没有显式注入策略时使用；注入的策略优先级更高。
+    """
+    if config.scoring.policy == "weighted":
+        return WeightedScoring(config)
+    return NullScoring()
+
+
 class NullScoring:
     """不计分：所有变化恒为 0。"""
 
@@ -109,7 +119,7 @@ class NullScoring:
 
 
 class WeightedScoring:
-    """按 `config.scoring` 的权重计分（框架默认规则）。
+    """按 `config.scoring` 的权重计分（由 `policy = "weighted"` 选用）。
 
     事件与分值：
 
@@ -121,8 +131,7 @@ class WeightedScoring:
     | 对局结束 | 正式分 | 吃子模式按存活棋子数 `survivor_piece_points`；否则 `first_finish_reward` |
     | 结算时的临时分 | 胜者保留、败者扣除 | `chain_temp` |
 
-    `enabled = False` 时所有 action 计分为 0；对局结束时的结算沿用既有语义，
-    **不**受 `enabled` 影响（即胜者仍会拿到 `first_finish_reward`）。
+    这个策略没有开关：选用它就全程计分。不想计分请用 `NullScoring`。
     """
 
     def __init__(self, config: PolyJumpConfig):
@@ -130,9 +139,6 @@ class WeightedScoring:
         self.scoring = config.scoring
 
     def on_action(self, ctx: ActionContext) -> ScoreDelta:
-        if not self.scoring.enabled:
-            return ScoreDelta()
-
         chain_jumps = max(0, len(ctx.path) - 1) if len(ctx.path) > 2 else 0
         # 只限制计分的连跳次数，不限制连跳本身长度
         if self.scoring.chain_max_scoring > 0:

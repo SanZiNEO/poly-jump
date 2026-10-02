@@ -11,7 +11,7 @@ def make_state() -> GameState:
         board_size=(9, 9, 9),
         players=2,
         direction_set=[6],
-        scoring=ScoringConfig(enabled=True, target_zone_points=20),
+        scoring=ScoringConfig(policy="weighted", target_zone_points=20),
     )
     state = GameState(cfg)
     state.board.pieces = {}

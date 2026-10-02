@@ -64,7 +64,12 @@ class RenderConfig(BaseModel):
 
 
 class ScoringConfig(BaseModel):
-    enabled: bool = False
+    policy: Literal["weighted", "none"] = "none"
+    """内置积分策略：`weighted` = 按下列权重计分；`none` = 完全不计分。
+
+    需要自定义规则时不用改这里 —— 直接给 `GameEnv` / `GameState` 注入
+    `ScoringPolicy` 实现即可（见 docs/10-semantics.md 第 5 节）。
+    """
     first_finish_reward: int = 10
     chain_jump_points: int = 1
     chain_temp: bool = True

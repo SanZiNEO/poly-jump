@@ -15,7 +15,7 @@ from .scoring import (
     ActionContext,
     FinishContext,
     ScoringPolicy,
-    WeightedScoring,
+    build_policy,
 )
 
 
@@ -25,7 +25,7 @@ class GameState:
             raise TypeError("scoring 必须实现 ScoringPolicy（on_action / on_finish）")
         self.id: str = uuid.uuid4().hex
         self.config = config
-        self.scoring: ScoringPolicy = scoring or WeightedScoring(config)
+        self.scoring: ScoringPolicy = scoring or build_policy(config)
         self.board: Board = Board(config)
         self.current_player: int = 1
         self.winner: Optional[int] = None

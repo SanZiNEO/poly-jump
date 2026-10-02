@@ -119,7 +119,7 @@ goal.first_to_finish_wins
 ## 7. scoring
 
 ```text
-scoring.enabled
+scoring.policy
 scoring.chain_jump_points
 scoring.chain_temp
 scoring.chain_max_scoring
@@ -128,5 +128,9 @@ scoring.target_zone_points
 scoring.first_finish_reward
 scoring.survivor_piece_points
 ```
+
+`scoring.policy` 选择内置积分策略：`"none"`（默认，完全不计分）/ `"weighted"`（按上面权重计分）。
+其余权重字段只在 `weighted` 下生效。需要自定义规则时不用改配置 —— 给 `GameEnv` 注入
+`ScoringPolicy` 实现即可（见 [10-semantics.md](./10-semantics.md) 第 5 节）。
 
 `chain_max_scoring` 只限制连跳**计分次数**，不限制连跳本身长度。
